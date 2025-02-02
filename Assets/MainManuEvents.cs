@@ -45,6 +45,14 @@ public class MainManuScript : MonoBehaviour
 
     private Button instantiateLobbyBtn;
 
+    private short[] playerSize = { 2,3,4 };   // selector for lobby size
+    private short indexPC = 0;
+
+    private string[] gameModes = { "basic" };
+    private short indexGM = 0;
+    // index of current size
+
+
     private void Awake()
     {
         document = GetComponent<UIDocument>();
@@ -53,7 +61,14 @@ public class MainManuScript : MonoBehaviour
         selectContainer = document.rootVisualElement.Q("SelectModeBox");
         joinContailer = document.rootVisualElement.Q("JoinMenuBox");
         createContainer = document.rootVisualElement.Q("CreateMenuBox");
-        // assign all buttons
+
+        // assign default lobby size
+        TextPCBox = document.rootVisualElement.Q("TextPCBox") as Label;
+        TextPCBox.text = playerSize[indexPC].ToString();
+
+        // assign default game mode
+        TextGMBox = document.rootVisualElement.Q("TextGMBox") as Label;
+        TextGMBox.text = gameModes[indexPC];
         InitButtons();
     }
 
@@ -95,16 +110,31 @@ public class MainManuScript : MonoBehaviour
         if (joinLobbyBtn != null) joinLobbyBtn.RegisterCallback<ClickEvent>(evt => OnJoinOptionBtnClicked());
 
         createLobbyBtn = AssignButton("CreateLobbyBtn");
+        if(createLobbyBtn != null) createLobbyBtn.RegisterCallback<ClickEvent>(evt => OnCreateLobbyOptionBtnClicked());
         playVsBotBtn = AssignButton("PlayBsBotBtn");
 
         // Join Menu Box Buttons
         backToSelectMenuBtn = AssignButton("BackToSelectMenuBtn");
-        if (backToSelectMenuBtn != null) backToSelectMenuBtn.RegisterCallback<ClickEvent>(evt => OnBackToSelectMenuClicked());  
+        if (backToSelectMenuBtn != null) backToSelectMenuBtn.RegisterCallback<ClickEvent>(evt => OnBackToSelectMenuClicked());
 
 
 
-        // Create Menu Box Buttons
-        
+        // Create Menu Box Buttons - Player Count
+
+        leftArrowPCBoxBtn = AssignButton("LeftArrowPCBoxBtn");
+        if (leftArrowPCBoxBtn != null) leftArrowPCBoxBtn.RegisterCallback<ClickEvent>(evt => OnLeftArrowPCClicked());
+
+        rightArrowPCBoxBtn = AssignButton("RightArrowPCBoxBtn");
+        if (rightArrowPCBoxBtn != null) rightArrowPCBoxBtn.RegisterCallback<ClickEvent>(evt => OnRightArrowPCClicked());
+
+        // Create Menu Box Buttons - Game Mode
+
+        leftArrowGMBoxBtn = AssignButton("LeftArrowGMBoxBtn");
+        if (leftArrowGMBoxBtn != null) leftArrowGMBoxBtn.RegisterCallback<ClickEvent>(evt => OnLeftArrowGMClicked());
+
+        rightArrowGMBoxBtn = AssignButton("RightArrowGMBoxBtn");
+        if (rightArrowGMBoxBtn != null) rightArrowGMBoxBtn.RegisterCallback<ClickEvent>(evt => OnRightArrowGMClicked());
+
     }
 
 
@@ -146,7 +176,12 @@ public class MainManuScript : MonoBehaviour
         selectContainer.style.display = DisplayStyle.None;
         joinContailer.style.display = DisplayStyle.Flex;  
     }
-
+    private void OnCreateLobbyOptionBtnClicked()
+    {
+        Debug.Log("Create Lobby Menu button clicked!");
+        selectContainer.style.display = DisplayStyle.None;
+        createContainer.style.display = DisplayStyle.Flex;
+    }
 
 
     // Join Menu
@@ -157,6 +192,47 @@ public class MainManuScript : MonoBehaviour
         joinContailer.style.display= DisplayStyle.None;
         selectContainer.style.display = DisplayStyle.Flex;
     }
+
+
+    // Create Lobby Menu
+
+    private void OnLeftArrowPCClicked()             // left arrow for Player Count
+    {
+        if (--indexPC < 0)
+        {
+            indexPC = 2;
+        }
+        TextPCBox.text = playerSize[indexPC].ToString();
+    }
+
+    private void OnRightArrowPCClicked()            // Right arrow to Player Count
+    {
+        if (++indexPC > 2)
+        {
+            indexPC = 0;
+        }
+        TextPCBox.text = playerSize[indexPC].ToString();
+    }
+
+    private void OnLeftArrowGMClicked()             // Left arrow to Game Mode
+    {
+        if (--indexGM < 0)
+        {
+            indexGM = 0;
+        }
+        TextGMBox.text =gameModes[indexGM].ToString();
+
+    }
+
+    private void OnRightArrowGMClicked()            // Right arrow to Game Mode
+    {
+        if (++indexGM > 0)
+        {
+            indexGM = 0;
+        }
+        TextGMBox.text = gameModes[indexGM].ToString();
+    }
+
 
 
 
