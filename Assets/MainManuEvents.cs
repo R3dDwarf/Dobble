@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -24,13 +25,15 @@ public class MainManuScript : MonoBehaviour
 
     // Butons of Select Mode Menu
     private Button backToMainBtn;
-    private Button joinLobbyBtn;
-    private Button createLobbyBtn;
+    private Button joinLobbyOptionBtn;
+    private Button createLobbyOptionbBtn;
     private Button playVsBotBtn;
 
     // Join Menu Container
     private VisualElement joinContailer;
     private Button backToSelectMenuBtn;
+    private TextField joinCode;
+    private Button joinLobbyBtn;
 
     // Create Menu Container
     private VisualElement createContainer;
@@ -50,7 +53,6 @@ public class MainManuScript : MonoBehaviour
 
     private string[] gameModes = { "basic" };
     private short indexGM = 0;
-    // index of current size
 
 
     private void Awake()
@@ -61,6 +63,10 @@ public class MainManuScript : MonoBehaviour
         selectContainer = document.rootVisualElement.Q("SelectModeBox");
         joinContailer = document.rootVisualElement.Q("JoinMenuBox");
         createContainer = document.rootVisualElement.Q("CreateMenuBox");
+
+        // assign join code Label
+        joinCode = document.rootVisualElement.Q("JoinCodeInput") as TextField;
+
 
         // assign default lobby size
         TextPCBox = document.rootVisualElement.Q("TextPCBox") as Label;
@@ -106,17 +112,19 @@ public class MainManuScript : MonoBehaviour
         backToMainBtn = AssignButton("BackToMainMenuBtn");
         if (backToMainBtn != null) backToMainBtn.RegisterCallback<ClickEvent>(evt => OnBackToMainBtnClicked());
 
-        joinLobbyBtn = AssignButton("JoinLobbyBtn");
-        if (joinLobbyBtn != null) joinLobbyBtn.RegisterCallback<ClickEvent>(evt => OnJoinOptionBtnClicked());
+        joinLobbyOptionBtn = AssignButton("JoinLobbyBtn");
+        if (    joinLobbyOptionBtn != null) joinLobbyOptionBtn.RegisterCallback<ClickEvent>(evt => OnJoinOptionBtnClicked());
 
-        createLobbyBtn = AssignButton("CreateLobbyBtn");
-        if(createLobbyBtn != null) createLobbyBtn.RegisterCallback<ClickEvent>(evt => OnCreateLobbyOptionBtnClicked());
+        createLobbyOptionbBtn = AssignButton("CreateLobbyBtn");
+        if(createLobbyOptionbBtn != null) createLobbyOptionbBtn.RegisterCallback<ClickEvent>(evt => OnCreateLobbyOptionBtnClicked());
         playVsBotBtn = AssignButton("PlayBsBotBtn");
 
         // Join Menu Box Buttons
         backToSelectMenuBtn = AssignButton("BackToSelectMenuBtn");
         if (backToSelectMenuBtn != null) backToSelectMenuBtn.RegisterCallback<ClickEvent>(evt => OnBackToSelectMenuClicked());
 
+        joinLobbyBtn = AssignButton("JoinBtn");
+        if (joinLobbyBtn != null) joinLobbyBtn.RegisterCallback<ClickEvent>(evt => OnJoinLobbyBtnClicked());
 
 
         // Create Menu Box Buttons - Player Count
@@ -134,6 +142,11 @@ public class MainManuScript : MonoBehaviour
 
         rightArrowGMBoxBtn = AssignButton("RightArrowGMBoxBtn");
         if (rightArrowGMBoxBtn != null) rightArrowGMBoxBtn.RegisterCallback<ClickEvent>(evt => OnRightArrowGMClicked());
+
+        // Create Menu Box Buttons - Create Lobby
+
+        instantiateLobbyBtn = AssignButton("InstantiateLobbyBtn");
+        if (instantiateLobbyBtn != null) instantiateLobbyBtn.RegisterCallback<ClickEvent>(evt => OnCreateLobbyBtnClicked());
 
     }
 
@@ -193,6 +206,21 @@ public class MainManuScript : MonoBehaviour
         selectContainer.style.display = DisplayStyle.Flex;
     }
 
+    private async void OnJoinLobbyBtnClicked()
+    {
+       bool succes = await RelayManager.Instance.JoinRelay(joinCode.text);
+
+        if (succes)
+        {
+            Debug.Log("Lobby joined succesfully");
+        }
+        else
+        {
+            //TODO 
+        }
+
+    }
+
 
     // Create Lobby Menu
 
@@ -231,6 +259,20 @@ public class MainManuScript : MonoBehaviour
             indexGM = 0;
         }
         TextGMBox.text = gameModes[indexGM].ToString();
+    }
+
+    private async void OnCreateLobbyBtnClicked()
+    {
+        string code = await RelayManager.Instance.CreateRelay(playerSize[indexPC]);
+
+        if (!string.IsNullOrEmpty(code))
+        {
+            Debug.Log($"Lobby created! Join Code: {code}");
+        }
+        else
+        {
+            Debug.LogError("Failed to create lobby.");
+        }
     }
 
 

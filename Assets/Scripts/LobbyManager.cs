@@ -1,25 +1,15 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+
 using TMPro;
 using Unity.Netcode;
-using UnityEditor.PackageManager;
-using UnityEditor.SearchService;
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
-public class LobbyUIManager : MonoBehaviour
+using UnityEngine.UIElements;
+
+public class LobbyManager : MonoBehaviour
 {
-    [SerializeField]
-    private Canvas lobby;
-    [SerializeField]
-    private Button hostButton;
-    [SerializeField]
-    private Button joinButton;
-    [SerializeField]
-    private Button play;
     [SerializeField]
     private RelayManager relayManager;
     [SerializeField]
@@ -30,21 +20,6 @@ public class LobbyUIManager : MonoBehaviour
 
     void Start()
     {
-        lobby.enabled = false;
-        hostButton.onClick.AddListener(() => {
-
-            lobby.enabled = true;
-            OnHostGamePressed();
-
-        });
-
-        joinButton.onClick.AddListener(() =>
-        {
-            OnJoinGamePressed(TMP_InputField.text.Trim());
-        });
-
-        play.onClick.AddListener(() =>
-        { ChangeScene("Main"); });
     }
 
     // Update is called once per frame
@@ -69,12 +44,13 @@ public class LobbyUIManager : MonoBehaviour
         }
     }
 
-    public async void OnHostGamePressed()
+    public async void OnHostGamePressed(Label joinCodeLabel, short count)
     {
         try
         {
-            joinCodeField.text = await relayManager.CreateRelay();
-            Debug.Log($"Join code{joinCodeField.text}");    
+            var joinCode = await relayManager.CreateRelay(count);
+            Debug.Log($"Join code{joinCode}");    
+            joinCodeLabel.text = joinCode;
         }
         catch (Exception ex)
         {
