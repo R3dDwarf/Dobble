@@ -44,7 +44,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    public async void OnHostGamePressed(Label joinCodeLabel, short count)
+    public async void HostGame(Label joinCodeLabel, short count)
     {
         try
         {
@@ -71,6 +71,8 @@ public class LobbyManager : MonoBehaviour
         }
 
     }
+
+
 }
 
 

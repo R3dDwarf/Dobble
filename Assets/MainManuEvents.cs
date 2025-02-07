@@ -12,6 +12,7 @@ public class MainManuScript : MonoBehaviour
 {
     private UIDocument document;
 
+
     // Main Manu Container
     private VisualElement mainMenuContainer;
 
@@ -54,6 +55,10 @@ public class MainManuScript : MonoBehaviour
     private string[] gameModes = { "basic" };
     private short indexGM = 0;
 
+    // Lobby Container
+    private VisualElement lobbyContailer;
+    private ListView playerList;
+
 
     private void Awake()
     {
@@ -63,6 +68,7 @@ public class MainManuScript : MonoBehaviour
         selectContainer = document.rootVisualElement.Q("SelectModeBox");
         joinContailer = document.rootVisualElement.Q("JoinMenuBox");
         createContainer = document.rootVisualElement.Q("CreateMenuBox");
+        lobbyContailer = document.rootVisualElement.Q("LobbyBox");
 
         // assign join code Label
         joinCode = document.rootVisualElement.Q("JoinCodeInput") as TextField;
@@ -263,7 +269,14 @@ public class MainManuScript : MonoBehaviour
 
     private async void OnCreateLobbyBtnClicked()
     {
+        // Relay
         string code = await RelayManager.Instance.CreateRelay(playerSize[indexPC]);
+
+
+        // UI
+        createContainer.style.display = DisplayStyle.None;
+        lobbyContailer.style.display = DisplayStyle.Flex;
+
 
         if (!string.IsNullOrEmpty(code))
         {
@@ -274,6 +287,8 @@ public class MainManuScript : MonoBehaviour
             Debug.LogError("Failed to create lobby.");
         }
     }
+
+
 
 
 
