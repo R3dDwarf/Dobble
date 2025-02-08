@@ -1,9 +1,12 @@
 using UnityEngine;
 using Unity.Netcode;
+using TMPro.EditorUtilities;
+using UnityEditor.PackageManager;
 
 public class MultiplayerManager : NetworkBehaviour
 {
     public static MultiplayerManager Instance;
+
 
     private void Awake()
     {
@@ -26,5 +29,6 @@ public class MultiplayerManager : NetworkBehaviour
     private void OnPlayerJoined(ulong clientId)
     {
         Debug.Log($"Player {clientId} joined!");
+        if (MainMenuScript.Instance) MainMenuScript.Instance.PlayerJoinedLobby(clientId.ToString());
     }
 }

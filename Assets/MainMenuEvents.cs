@@ -7,9 +7,14 @@ using System.Threading.Tasks;
 using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
-public class MainManuScript : MonoBehaviour
+public class MainMenuScript : MonoBehaviour
 {
+
+    public static  MainMenuScript Instance;
+    
+
     private UIDocument document;
 
 
@@ -49,19 +54,27 @@ public class MainManuScript : MonoBehaviour
 
     private Button instantiateLobbyBtn;
 
-    private short[] playerSize = { 2,3,4 };   // selector for lobby size
-    private short indexPC = 0;
-
-    private string[] gameModes = { "basic" };
-    private short indexGM = 0;
 
     // Lobby Container
     private VisualElement lobbyContailer;
     private ListView playerList;
 
 
+    //--------------------------------------------- LOGIC
+
+    private short[] playerSize = { 2, 3, 4 };   // selector for lobby size
+    private short indexPC = 0;
+
+    private string[] gameModes = { "basic" };
+    private short indexGM = 0;
+
+
+    private List<string> players = new List<string>(); 
+
+
     private void Awake()
     {
+        Instance = this;
         document = GetComponent<UIDocument>();
         // assign all containers
         mainMenuContainer = document.rootVisualElement.Q("MainMenuBox");
@@ -82,6 +95,9 @@ public class MainManuScript : MonoBehaviour
         TextGMBox = document.rootVisualElement.Q("TextGMBox") as Label;
         TextGMBox.text = gameModes[indexPC];
         InitButtons();
+
+        //assign player ListView
+        playerList =document.rootVisualElement.Q("PlayerListView") as ListView; 
     }
 
     private void Start()
@@ -170,6 +186,42 @@ public class MainManuScript : MonoBehaviour
             return null;
         }
     }
+    
+
+    private void SetupPlayerList()
+    {
+        playerList.itemsSource = players;
+
+        playerList.makeItem = () =>
+        {
+            return new Label(); 
+        };
+
+        playerList.bindItem = (element, index) =>
+        {
+            (element as Label).text = players[index];
+        };
+
+        playerList.RefreshItems();
+    }
+
+
+    public void PlayerJoinedLobby(string name)
+    {
+        if (playerList.itemsSource == null)
+        {
+            playerList.itemsSource = new List<string>();
+        }
+
+        players = (List<string>)playerList.itemsSource;
+
+        players.Add(name);
+
+        playerList.itemsSource = players;
+
+        playerList.RefreshItems();
+    }
+
 
     //------------------------------------ Onclick event fuctions
 
@@ -272,11 +324,11 @@ public class MainManuScript : MonoBehaviour
         // Relay
         string code = await RelayManager.Instance.CreateRelay(playerSize[indexPC]);
 
-
-        // UI
+        //UI
+        SetupPlayerList();
         createContainer.style.display = DisplayStyle.None;
         lobbyContailer.style.display = DisplayStyle.Flex;
-
+        Debug.Log("Lobby succesfully created!");
 
         if (!string.IsNullOrEmpty(code))
         {
