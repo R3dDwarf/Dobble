@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEditor.PackageManager;
+using UnityEditorInternal.VersionControl;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEditor.Experimental.GraphView.GraphView;
@@ -60,8 +61,8 @@ public class MainMenuScript : MonoBehaviour
     // Lobby Container
     private VisualElement lobbyContainer;
     private ListView playerList;
-
-
+    [SerializeField]
+    private VisualTreeAsset listItemTemplate;
     //--------------------------------------------- LOGIC
 
     private short[] playerSize = { 2, 3, 4 };   // selector for lobby size
@@ -188,38 +189,40 @@ public class MainMenuScript : MonoBehaviour
             return null;
         }
     }
-    
+
 
     private void SetupPlayerList()
     {
-        playerList.itemsSource = players;
-
         playerList.makeItem = () =>
         {
-            return new Label(); 
+            return listItemTemplate.CloneTree();
         };
 
         playerList.bindItem = (element, index) =>
         {
-            (element as Label).text = players[index];
+            Label label = element.Q<Label>("PlayerNameLabel");
+            if (label != null)
+            {
+                label.text = players[index];
+            }
         };
 
-        playerList.RefreshItems();
+        playerList.itemsSource = players;
+        playerList.Rebuild();
     }
-
 
     public void UpdatePlayerList(NetworkList<FixedString32Bytes> playersNO)
     {
-        players = new List<string>();
+        players.Clear();  
 
         foreach (var player in playersNO)
         {
             players.Add(player.ToString());
-
         }
-       
-        SetupPlayerList();
+
+        playerList.Rebuild(); 
     }
+
 
 
 
