@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Unity.Collections;
+using Unity.Netcode;
 using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -36,7 +38,7 @@ public class MainMenuScript : MonoBehaviour
     private Button playVsBotBtn;
 
     // Join Menu Container
-    private VisualElement joinContailer;
+    private VisualElement joinContainer;
     private Button backToSelectMenuBtn;
     private TextField joinCode;
     private Button joinLobbyBtn;
@@ -56,7 +58,7 @@ public class MainMenuScript : MonoBehaviour
 
 
     // Lobby Container
-    private VisualElement lobbyContailer;
+    private VisualElement lobbyContainer;
     private ListView playerList;
 
 
@@ -79,9 +81,9 @@ public class MainMenuScript : MonoBehaviour
         // assign all containers
         mainMenuContainer = document.rootVisualElement.Q("MainMenuBox");
         selectContainer = document.rootVisualElement.Q("SelectModeBox");
-        joinContailer = document.rootVisualElement.Q("JoinMenuBox");
+        joinContainer = document.rootVisualElement.Q("JoinMenuBox");
         createContainer = document.rootVisualElement.Q("CreateMenuBox");
-        lobbyContailer = document.rootVisualElement.Q("LobbyBox");
+        lobbyContainer = document.rootVisualElement.Q("LobbyBox");
 
         // assign join code Label
         joinCode = document.rootVisualElement.Q("JoinCodeInput") as TextField;
@@ -206,21 +208,20 @@ public class MainMenuScript : MonoBehaviour
     }
 
 
-    public void PlayerJoinedLobby(string name)
+    public void UpdatePlayerList(NetworkList<FixedString32Bytes> playersNO)
     {
-        if (playerList.itemsSource == null)
+        players = new List<string>();
+
+        foreach (var player in playersNO)
         {
-            playerList.itemsSource = new List<string>();
+            players.Add(player.ToString());
+
         }
-
-        players = (List<string>)playerList.itemsSource;
-
-        players.Add(name);
-
-        playerList.itemsSource = players;
-
-        playerList.RefreshItems();
+       
+        SetupPlayerList();
     }
+
+
 
 
     //------------------------------------ Onclick event fuctions
@@ -245,7 +246,7 @@ public class MainMenuScript : MonoBehaviour
     {
         Debug.Log("Join Menu button clicked!");
         selectContainer.style.display = DisplayStyle.None;
-        joinContailer.style.display = DisplayStyle.Flex;  
+        joinContainer.style.display = DisplayStyle.Flex;  
     }
     private void OnCreateLobbyOptionBtnClicked()
     {
@@ -260,13 +261,14 @@ public class MainMenuScript : MonoBehaviour
     private void OnBackToSelectMenuClicked()
     {
         Debug.Log("Back to Select Menu button clicked!");
-        joinContailer.style.display= DisplayStyle.None;
+        joinContainer.style.display= DisplayStyle.None;
         selectContainer.style.display = DisplayStyle.Flex;
     }
 
     private async void OnJoinLobbyBtnClicked()
     {
        bool succes = await RelayManager.Instance.JoinRelay(joinCode.text);
+
 
         if (succes)
         {
@@ -276,7 +278,9 @@ public class MainMenuScript : MonoBehaviour
         {
             //TODO
         }
-
+        SetupPlayerList();
+        joinContainer.style.display = DisplayStyle.None;
+        lobbyContainer.style.display = DisplayStyle.Flex;
     }
 
 
@@ -327,7 +331,7 @@ public class MainMenuScript : MonoBehaviour
         //UI
         SetupPlayerList();
         createContainer.style.display = DisplayStyle.None;
-        lobbyContailer.style.display = DisplayStyle.Flex;
+        lobbyContainer.style.display = DisplayStyle.Flex;
         Debug.Log("Lobby succesfully created!");
 
         if (!string.IsNullOrEmpty(code))
