@@ -207,18 +207,18 @@ PrefabInstance:
     - target: {fileID: 3465648474135730346, guid: 23c2e89a7c8ee804fbaabfde3588a7fe, type: 3}
       propertyPath: NetworkConfig.Prefabs.NetworkPrefabsLists.Array.data[1]
       value: 
-      objectReference: {fileID: 11400000, guid: 0c0ce2c80acd0a44fafd86a36128b49a, type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 3639300136961540379, guid: 23c2e89a7c8ee804fbaabfde3588a7fe, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.0506861
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3639300136961540379, guid: 23c2e89a7c8ee804fbaabfde3588a7fe, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.1612427
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3639300136961540379, guid: 23c2e89a7c8ee804fbaabfde3588a7fe, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.046589967
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3639300136961540379, guid: 23c2e89a7c8ee804fbaabfde3588a7fe, type: 3}
       propertyPath: m_LocalRotation.w
@@ -470,6 +470,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bcf99828088dad4c9eb5006d80a4226, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  deckManagerPrefab: {fileID: 4790593174331711208, guid: f0dd8c028daad2447a80354efa9f1fa7, type: 3}
 --- !u!114 &1134539957
 MonoBehaviour:
   m_ObjectHideFlags: 0

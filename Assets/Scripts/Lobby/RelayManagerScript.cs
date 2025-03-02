@@ -61,6 +61,13 @@ public class RelayManager : MonoBehaviour
         return true;
     }
 
+    public void CloseRelayLobby()
+    {
+        if (NetworkManager.Singleton.IsHost)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+    }
 
 
 }

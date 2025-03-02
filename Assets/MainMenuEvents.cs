@@ -1,21 +1,18 @@
-using System;
-using System.Collections;
+
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using System.Collections.Specialized;
+using System.Threading;
 using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Netcode;
-using UnityEditor.PackageManager;
-using UnityEditorInternal.VersionControl;
+
 using UnityEngine;
 using UnityEngine.UIElements;
-using static UnityEditor.Experimental.GraphView.GraphView;
-
-public class MainMenuScript : MonoBehaviour
+using static Unity.Collections.AllocatorManager;
+public class MainMenuEvents : MonoBehaviour
 {
 
-    public static  MainMenuScript Instance;
+    public static  MainMenuEvents Instance;
     
 
     private UIDocument document;
@@ -24,10 +21,10 @@ public class MainMenuScript : MonoBehaviour
     // Main Manu Container
     private VisualElement mainMenuContainer;
 
-    // Buttons of Main Menu 
+    // Buttons of Main Menu
+    [SerializeField]
+    private TextField playerName;
     private Button playBtn;
-    private Button settingsBtn;
-    private Button quitBtn;
 
     // Select Mode Menu Container
     private VisualElement selectContainer;
@@ -41,11 +38,13 @@ public class MainMenuScript : MonoBehaviour
     // Join Menu Container
     private VisualElement joinContainer;
     private Button backToSelectMenuBtn;
-    private TextField joinCode;
+    private TextField joinCodeInput;
     private Button joinLobbyBtn;
 
     // Create Menu Container
     private VisualElement createContainer;
+
+    private Button backToSelectMenuBtn2;
 
     private Button leftArrowPCBoxBtn;
     private Label TextPCBox;
@@ -63,16 +62,22 @@ public class MainMenuScript : MonoBehaviour
     private ListView playerList;
     [SerializeField]
     private VisualTreeAsset listItemTemplate;
+
+    private Button backToCreateLobbyBtn;
+    private Button startGameBtn;
+
+    private Label joinCodeLabel;
+
     //--------------------------------------------- LOGIC
 
     private short[] playerSize = { 2, 3, 4 };   // selector for lobby size
     private short indexPC = 0;
 
-    private string[] gameModes = { "basic" };
+    private string[] gameModes = { "Tower" };
     private short indexGM = 0;
 
 
-    private List<string> players = new List<string>(); 
+    private List<string> players = new List<string>();
 
 
     private void Awake()
@@ -86,8 +91,11 @@ public class MainMenuScript : MonoBehaviour
         createContainer = document.rootVisualElement.Q("CreateMenuBox");
         lobbyContainer = document.rootVisualElement.Q("LobbyBox");
 
+        // assign player name Input
+        playerName = document.rootVisualElement.Q("PlayerNameInput") as TextField;
+
         // assign join code Label
-        joinCode = document.rootVisualElement.Q("JoinCodeInput") as TextField;
+        joinCodeInput = document.rootVisualElement.Q("JoinCodeInput") as TextField;
 
 
         // assign default lobby size
@@ -97,10 +105,14 @@ public class MainMenuScript : MonoBehaviour
         // assign default game mode
         TextGMBox = document.rootVisualElement.Q("TextGMBox") as Label;
         TextGMBox.text = gameModes[indexPC];
+        //assign player ListView
+        playerList = document.rootVisualElement.Q("PlayerListView") as ListView;
+
+        //assign join code Label
+        joinCodeLabel = document.rootVisualElement.Q("JoinCodeLabel") as Label;
+
         InitButtons();
 
-        //assign player ListView
-        playerList =document.rootVisualElement.Q("PlayerListView") as ListView; 
     }
 
     private void Start()
@@ -127,10 +139,6 @@ public class MainMenuScript : MonoBehaviour
         // Main Manu Box buttons
         playBtn = AssignButton("PlayBtn");
         if (playBtn != null) playBtn.RegisterCallback<ClickEvent>(evt => OnPlayBtnClicked());
-
-
-        settingsBtn = AssignButton("SettingsBtn");
-        quitBtn = AssignButton("QuitBtn");
 
         // Select Mode Box Buttons
 
@@ -160,6 +168,12 @@ public class MainMenuScript : MonoBehaviour
         rightArrowPCBoxBtn = AssignButton("RightArrowPCBoxBtn");
         if (rightArrowPCBoxBtn != null) rightArrowPCBoxBtn.RegisterCallback<ClickEvent>(evt => OnRightArrowPCClicked());
 
+        // Create Menu Box Buttons
+
+        backToSelectMenuBtn2 = AssignButton("BackToSelectMenuBtn2");
+        if (backToSelectMenuBtn2 != null) backToSelectMenuBtn2.RegisterCallback<ClickEvent>(evt => OnBackToSelectMenuClicked());
+
+
         // Create Menu Box Buttons - Game Mode
 
         leftArrowGMBoxBtn = AssignButton("LeftArrowGMBoxBtn");
@@ -169,10 +183,24 @@ public class MainMenuScript : MonoBehaviour
         if (rightArrowGMBoxBtn != null) rightArrowGMBoxBtn.RegisterCallback<ClickEvent>(evt => OnRightArrowGMClicked());
 
         // Create Menu Box Buttons - Create Lobby
-
+        
         instantiateLobbyBtn = AssignButton("InstantiateLobbyBtn");
-        if (instantiateLobbyBtn != null) instantiateLobbyBtn.RegisterCallback<ClickEvent>(evt => OnCreateLobbyBtnClicked());
+        if (instantiateLobbyBtn != null)
+        {
+            instantiateLobbyBtn.RegisterCallback<ClickEvent>(async evt => await OnCreateLobbyBtnClickedAsync());
+        }
 
+
+        // Lobby Box Buttons
+        startGameBtn = AssignButton("StartGameBtn");
+        if (startGameBtn != null) startGameBtn.RegisterCallback<ClickEvent> (evt => OnStartGameClicked());
+
+        // Lobby Box Buttons
+
+        backToCreateLobbyBtn = AssignButton("BackToCreateLobbyBtn");
+        if (backToCreateLobbyBtn != null) backToCreateLobbyBtn.RegisterCallback<ClickEvent> (evt => OnBackToSelectMenuClicked());
+
+        
     }
 
 
@@ -204,26 +232,37 @@ public class MainMenuScript : MonoBehaviour
             if (label != null)
             {
                 label.text = players[index];
-            }
-        };
 
+            }
+            element.style.marginBottom = 50;
+        };
+        playerList.style.flexDirection = FlexDirection.Column;
+        playerList.style.justifyContent = Justify.FlexStart;
+        playerList.style.alignItems = Align.Stretch;
+        playerList.style.height = 50;
         playerList.itemsSource = players;
+        playerList.RefreshItems();
         playerList.Rebuild();
     }
 
+
     public void UpdatePlayerList(NetworkList<FixedString32Bytes> playersNO)
     {
-        players.Clear();  
+        players.Clear();
 
         foreach (var player in playersNO)
         {
             players.Add(player.ToString());
         }
 
-        playerList.Rebuild(); 
+        playerList.Rebuild();
     }
 
 
+    public string GetPlayerName()
+    {
+        return playerName.text;
+    }
 
 
 
@@ -233,8 +272,11 @@ public class MainMenuScript : MonoBehaviour
     private void OnPlayBtnClicked()
     {
         Debug.Log("Play button clicked!");
-        mainMenuContainer.style.display = DisplayStyle.None;
-        selectContainer.style.display = DisplayStyle.Flex;  
+        if (!string.IsNullOrEmpty(playerName.text))
+        {   
+            mainMenuContainer.style.display = DisplayStyle.None;
+            selectContainer.style.display = DisplayStyle.Flex;
+        }
     }
 
     // Select Mode Menu
@@ -253,7 +295,6 @@ public class MainMenuScript : MonoBehaviour
     }
     private void OnCreateLobbyOptionBtnClicked()
     {
-        Debug.Log("Create Lobby Menu button clicked!");
         selectContainer.style.display = DisplayStyle.None;
         createContainer.style.display = DisplayStyle.Flex;
     }
@@ -264,26 +305,37 @@ public class MainMenuScript : MonoBehaviour
     private void OnBackToSelectMenuClicked()
     {
         Debug.Log("Back to Select Menu button clicked!");
+        RelayManager.Instance.CloseRelayLobby();
         joinContainer.style.display= DisplayStyle.None;
+        createContainer.style.display = DisplayStyle .None;
+        lobbyContainer.style.display = DisplayStyle .None;
         selectContainer.style.display = DisplayStyle.Flex;
     }
 
     private async void OnJoinLobbyBtnClicked()
     {
-       bool succes = await RelayManager.Instance.JoinRelay(joinCode.text);
-
-
-        if (succes)
         {
-            Debug.Log("Lobby joined succesfully");
+            if (string.IsNullOrWhiteSpace(joinCodeInput.text))
+            {
+                Debug.Log("Join code is empty!");
+                return;
+            }
+
+            bool success = await MultiplayerManager.Instance.JoinLobby(joinCodeInput.text);
+
+            if (success)
+            {
+                Debug.Log("Lobby joined successfully!");
+                SetupPlayerList();
+                joinContainer.style.display = DisplayStyle.None;
+                lobbyContainer.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                //TODO
+            }
         }
-        else
-        {
-            //TODO
-        }
-        SetupPlayerList();
-        joinContainer.style.display = DisplayStyle.None;
-        lobbyContainer.style.display = DisplayStyle.Flex;
+
     }
 
 
@@ -326,15 +378,17 @@ public class MainMenuScript : MonoBehaviour
         TextGMBox.text = gameModes[indexGM].ToString();
     }
 
-    private async void OnCreateLobbyBtnClicked()
+    private async Task OnCreateLobbyBtnClickedAsync()
     {
-        // Relay
-        string code = await RelayManager.Instance.CreateRelay(playerSize[indexPC]);
+
+        string code = await MultiplayerManager.Instance.CreateLobby((short)(playerSize[indexPC] - 1));
+        joinCodeLabel.text = code; 
 
         //UI
         SetupPlayerList();
         createContainer.style.display = DisplayStyle.None;
         lobbyContainer.style.display = DisplayStyle.Flex;
+
         Debug.Log("Lobby succesfully created!");
 
         if (!string.IsNullOrEmpty(code))
@@ -347,14 +401,19 @@ public class MainMenuScript : MonoBehaviour
         }
     }
 
+    // Lobby Box
 
+    private void OnBackToCreateLobbyBtnClicked() // TODO delete
+    {
+        lobbyContainer.style.display = DisplayStyle.None;
+        RelayManager.Instance.CloseRelayLobby();
+        OnCreateLobbyOptionBtnClicked();
 
-
-
-
-
-
-
+    }
+    private void OnStartGameClicked()
+    {
+        MultiplayerManager.Instance.ChangeScene(gameModes[indexGM]);
+    }
 
 
 }

@@ -1,25 +1,34 @@
-using UnityEngine;
+using System.Threading.Tasks;
 using Unity.Netcode;
+using UnityEngine.SceneManagement;
+using UnityEngine;
 using Unity.Collections;
-using System.Collections.Generic;
 
 public class MultiplayerManager : NetworkBehaviour
 {
-    public static MultiplayerManager Instance;
+    public static MultiplayerManager Instance { get; private set; }
 
+    public GameObject deckManagerPrefab;
+
+    // Store player names and clientIds in separate lists
     public NetworkList<FixedString32Bytes> playerNames;
-
+    public NetworkList<ulong> playerIds;
 
     private void Awake()
     {
-        Instance = this;
-        playerNames = new NetworkList<FixedString32Bytes>(); // Initialize the list
-
-        // Listen for list changes and update UI when modified
-        playerNames.OnListChanged += (NetworkListEvent<FixedString32Bytes> changeEvent) =>
+        if (Instance == null)
         {
-            UpdateUI();
-        };
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        DontDestroyOnLoad(gameObject);
+        playerNames = new NetworkList<FixedString32Bytes>();
+        playerIds = new NetworkList<ulong>();
     }
 
     public override void OnNetworkSpawn()
@@ -31,36 +40,92 @@ public class MultiplayerManager : NetworkBehaviour
         }
         else
         {
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             Debug.Log("MultiplayerManager started on client");
+        }
+
+        playerNames.OnListChanged += (NetworkListEvent<FixedString32Bytes> changeEvent) =>
+        {
+            UpdateUI();
+        };
+        playerIds.OnListChanged += (NetworkListEvent<ulong> changeEvent) =>
+        {
+            UpdateUI();
+        };
+    }
+    private void OnClientConnected(ulong clientId)
+    {
+        if (clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            Debug.Log("Local client connected! Sending RPC...");
+            SetPlayerNameServerRpc(clientId, MainMenuEvents.Instance.GetPlayerName());
         }
     }
 
+
+
+
+    // Creates Lobby via relay
+    public async Task<string> CreateLobby(short lobbySize)
+    {
+        return await RelayManager.Instance.CreateRelay(lobbySize);
+    }
+
+    // Joins Lobby via relay
+    public async Task<bool> JoinLobby(string joinCode)
+    {
+        return await RelayManager.Instance.JoinRelay(joinCode);
+    }
+
+    // Action if another client joins
     private void OnPlayerJoined(ulong clientId)
     {
         Debug.Log($"Player {clientId} joined!");
 
-        if (IsServer) // Only the server modifies the list
+        if (IsServer)
         {
-            string playerName = "Player_" + clientId;
-            AddPlayerServerRpc(playerName);
+            if (MainMenuEvents.Instance)
+            {
+                string ownerName = MainMenuEvents.Instance.GetPlayerName();
+                SetPlayerNameServerRpc(clientId, ownerName);
+            }
         }
     }
 
-    [ServerRpc]
-    private void AddPlayerServerRpc(string playerName)
+    // Start Game scene
+    public void ChangeScene(string sceneName)
     {
-        if (!playerNames.Contains(playerName))
+        if (IsServer)
         {
-            playerNames.Add(playerName);
+            NetworkManager.Singleton.SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
         }
+    }
+
+    // SERVER RPCs
+    [ServerRpc(RequireOwnership = false)]
+    public void SetPlayerNameServerRpc(ulong clientId, string playerName)
+    {
+        FixedString32Bytes name = new FixedString32Bytes(playerName);
+
+        if (!playerIds.Contains(clientId))
+        {
+            playerIds.Add(clientId);
+            playerNames.Add(name);
+        }
+        if (string.Compare(playerNames[playerIds.IndexOf(clientId)].ToString(), playerName) != 0)
+        {
+            playerNames[playerIds.IndexOf(clientId)] = playerName;
+        }
+        Debug.LogWarning(playerName);
+
     }
 
 
     private void UpdateUI()
     {
-        if (MainMenuScript.Instance)
+        if (MainMenuEvents.Instance)
         {
-            MainMenuScript.Instance.UpdatePlayerList(playerNames);
+            MainMenuEvents.Instance.UpdatePlayerList(playerNames);
         }
     }
 }

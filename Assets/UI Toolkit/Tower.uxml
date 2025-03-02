@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/MainManuStyle.uss?fileID=7433441132597879392&amp;guid=67d628e5a2fbf9c40b52c391ae084a26&amp;type=3#MainManuStyle" />
+    <ui:GroupBox name="GroupBox" style="justify-content: space-between; align-items: center; flex-grow: 1; flex-shrink: 1;">
+        <ui:GroupBox name="GroupBox" style="flex-shrink: 100; flex-grow: 0; align-items: flex-start; align-self: flex-start; justify-content: space-between; flex-wrap: nowrap; flex-direction: row; min-width: 100%; height: 500px; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0;">
+            <ui:VisualElement name="VisualElement" class="purple" style="flex-grow: 0; width: 500px; height: 250px; border-top-left-radius: 80px; border-top-right-radius: 80px; border-bottom-right-radius: 80px; border-bottom-left-radius: 80px; margin-top: -100px; margin-left: -80px; flex-shrink: 0; color: rgb(0, 0, 0); align-items: center; justify-content: flex-end; -unity-text-align: upper-left; flex-direction: column; align-self: auto; padding-right: 0; padding-left: 30px;">
+                <ui:Label tabindex="-1" text="Player Name 1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="PlayerName1" class="styleText" style="margin-top: 100px; color: rgb(0, 0, 0); font-size: 40px;" />
+                <ui:Label tabindex="-1" text="Player Score 1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="PlayerScore1" class="styleText" style="align-items: auto;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" class="purple" style="flex-grow: 0; width: 500px; height: 250px; border-top-left-radius: 80px; border-top-right-radius: 80px; border-bottom-right-radius: 80px; border-bottom-left-radius: 80px; margin-top: -100px; margin-left: 0; flex-shrink: 0; margin-right: -80px; justify-content: flex-end; align-items: center; padding-right: 30px;">
+                <ui:Label tabindex="-1" text="Player Name 1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="PlayerName2" class="styleText" style="margin-top: 100px; color: rgb(0, 0, 0); font-size: 40px;" />
+                <ui:Label tabindex="-1" text="Player Score 2" parse-escape-sequences="true" display-tooltip-when-elided="true" name="PlayerScore2" class="styleText" />
+            </ui:VisualElement>
+        </ui:GroupBox>
+        <ui:GroupBox name="GroupBox" style="max-width: 100%; min-width: 100%; align-items: flex-end; justify-content: space-between; align-self: flex-end; flex-direction: row; -unity-text-align: upper-left; flex-shrink: 100; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0;">
+            <ui:VisualElement name="VisualElement" class="purple" style="flex-grow: 0; width: 500px; height: 250px; border-top-left-radius: 80px; border-top-right-radius: 80px; border-bottom-right-radius: 80px; border-bottom-left-radius: 80px; margin-top: 0; margin-left: -80px; flex-shrink: 0; margin-right: 0; margin-bottom: -100px; align-items: center; justify-content: flex-start; flex-direction: column; flex-wrap: nowrap; align-self: auto; padding-left: 30px;">
+                <ui:Label tabindex="-1" text="Player Name 3" parse-escape-sequences="true" display-tooltip-when-elided="true" name="PlayerName3" class="styleText" style="margin-top: 0; color: rgb(0, 0, 0); font-size: 40px;" />
+                <ui:Label tabindex="-1" text="Player Score 3" parse-escape-sequences="true" display-tooltip-when-elided="true" name="PlayerScore3" class="styleText" style="margin-bottom: 100px;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" class="purple" style="flex-grow: 0; width: 500px; height: 250px; border-top-left-radius: 80px; border-top-right-radius: 80px; border-bottom-right-radius: 80px; border-bottom-left-radius: 80px; margin-top: 0; margin-left: 0; flex-shrink: 0; margin-right: -80px; margin-bottom: -100px; align-items: center; justify-content: flex-start; padding-right: 30px;">
+                <ui:Label tabindex="-1" text="Player Name 4" parse-escape-sequences="true" display-tooltip-when-elided="true" name="PlayerName3" class="styleText" style="margin-top: 0; color: rgb(0, 0, 0); font-size: 40px;" />
+                <ui:Label tabindex="-1" text="Player Score 4" parse-escape-sequences="true" display-tooltip-when-elided="true" name="PlayerScore3" class="styleText" style="margin-bottom: 100px;" />
+            </ui:VisualElement>
+        </ui:GroupBox>
+    </ui:GroupBox>
+</ui:UXML>

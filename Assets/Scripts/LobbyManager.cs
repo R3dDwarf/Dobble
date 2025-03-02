@@ -1,5 +1,5 @@
 using System;
-
+using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
 
@@ -10,6 +10,23 @@ using UnityEngine.UIElements;
 
 public class LobbyManager : MonoBehaviour
 {
+
+    public static LobbyManager Instance;
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); 
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+
+
     [SerializeField]
     private RelayManager relayManager;
     [SerializeField]
@@ -24,11 +41,6 @@ public class LobbyManager : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    {
-
-    }
-
-    private void Awake()
     {
 
     }
@@ -58,16 +70,19 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    public async void OnJoinGamePressed(string joinCode)
+    public async Task<bool> OnJoinGamePressed(string joinCode)
     {
+        {
+
+        }
         try
         {
-            await relayManager.JoinRelay(joinCode);
-            Debug.Log("Joined lobby");
+            return await relayManager.JoinRelay(joinCode);
         }
         catch(Exception e)
         {
             Debug.LogError(e.Message);
+            return false;
         }
 
     }
