@@ -519,9 +519,33 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7933939665186225640, guid: f0dd8c028daad2447a80354efa9f1fa7, type: 3}
-      propertyPath: cardPrefab6
+      propertyPath: sprites.Array.size
+      value: 57
+      objectReference: {fileID: 0}
+    - target: {fileID: 7933939665186225640, guid: f0dd8c028daad2447a80354efa9f1fa7, type: 3}
+      propertyPath: sprites.Array.data[51]
       value: 
-      objectReference: {fileID: 5447167986756682933, guid: 8bbbf882fdead1a48811470cc61041ba, type: 3}
+      objectReference: {fileID: 21300000, guid: d100bc9f0ea37c64ab5b3db10bae7767, type: 3}
+    - target: {fileID: 7933939665186225640, guid: f0dd8c028daad2447a80354efa9f1fa7, type: 3}
+      propertyPath: sprites.Array.data[52]
+      value: 
+      objectReference: {fileID: 21300000, guid: 257412c95b4ada84cba424b2c52f8a71, type: 3}
+    - target: {fileID: 7933939665186225640, guid: f0dd8c028daad2447a80354efa9f1fa7, type: 3}
+      propertyPath: sprites.Array.data[53]
+      value: 
+      objectReference: {fileID: 21300000, guid: 0bd8e93bd0ce41c4ea2e022eb8492752, type: 3}
+    - target: {fileID: 7933939665186225640, guid: f0dd8c028daad2447a80354efa9f1fa7, type: 3}
+      propertyPath: sprites.Array.data[54]
+      value: 
+      objectReference: {fileID: 21300000, guid: cdac8a71a9d397045ba50e6bf89a61df, type: 3}
+    - target: {fileID: 7933939665186225640, guid: f0dd8c028daad2447a80354efa9f1fa7, type: 3}
+      propertyPath: sprites.Array.data[55]
+      value: 
+      objectReference: {fileID: 21300000, guid: 5e2470a99ec8b7c42aa2f566284cc063, type: 3}
+    - target: {fileID: 7933939665186225640, guid: f0dd8c028daad2447a80354efa9f1fa7, type: 3}
+      propertyPath: sprites.Array.data[56]
+      value: 
+      objectReference: {fileID: 21300000, guid: 8f03a1b36806f9a4f8abf1347673f156, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

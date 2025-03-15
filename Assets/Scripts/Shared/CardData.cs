@@ -7,19 +7,13 @@ public struct CardData : INetworkSerializable, IEquatable<CardData>
 {
     public FixedList64Bytes<int> symbols;
 
-    public CardData(int s1, int s2, int s3, int s4, int s5, int s6, int s7, int s8)
+    public int size;
+
+
+    public CardData(int size)
     {
-        symbols = new FixedList64Bytes<int>
-        {
-            s1,
-            s2,
-            s3,
-            s4,
-            s5,
-            s6,
-            s7,
-            s8
-        };
+        this.size = size;
+        symbols = new FixedList64Bytes<int>();
     }
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter

@@ -471,6 +471,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deckManagerPrefab: {fileID: 4790593174331711208, guid: f0dd8c028daad2447a80354efa9f1fa7, type: 3}
+  symbolsOnCard: 0
+  clientsReady: 
 --- !u!114 &1134539957
 MonoBehaviour:
   m_ObjectHideFlags: 0

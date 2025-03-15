@@ -70,8 +70,8 @@ public class MainMenuEvents : MonoBehaviour
 
     //--------------------------------------------- LOGIC
 
-    private short[] playerSize = { 2, 3, 4 };   // selector for lobby size
-    private short indexPC = 0;
+    private short[] symbolCount = { 6, 7, 8 };   // selector for count of symbols on each card
+    private short indexSC = 0;
 
     private string[] gameModes = { "Tower" };
     private short indexGM = 0;
@@ -100,11 +100,11 @@ public class MainMenuEvents : MonoBehaviour
 
         // assign default lobby size
         TextPCBox = document.rootVisualElement.Q("TextPCBox") as Label;
-        TextPCBox.text = playerSize[indexPC].ToString();
+        TextPCBox.text = symbolCount[indexSC].ToString();
 
         // assign default game mode
         TextGMBox = document.rootVisualElement.Q("TextGMBox") as Label;
-        TextGMBox.text = gameModes[indexPC];
+        TextGMBox.text = gameModes[indexSC];
         //assign player ListView
         playerList = document.rootVisualElement.Q("PlayerListView") as ListView;
 
@@ -343,20 +343,20 @@ public class MainMenuEvents : MonoBehaviour
 
     private void OnLeftArrowPCClicked()             // left arrow for Player Count
     {
-        if (--indexPC < 0)
+        if (--indexSC < 0)
         {
-            indexPC = 2;
+            indexSC = 2;
         }
-        TextPCBox.text = playerSize[indexPC].ToString();
+        TextPCBox.text = symbolCount[indexSC].ToString();
     }
 
     private void OnRightArrowPCClicked()            // Right arrow to Player Count
     {
-        if (++indexPC > 2)
+        if (++indexSC > 2)
         {
-            indexPC = 0;
+            indexSC = 0;
         }
-        TextPCBox.text = playerSize[indexPC].ToString();
+        TextPCBox.text = symbolCount[indexSC].ToString();
     }
 
     private void OnLeftArrowGMClicked()             // Left arrow to Game Mode
@@ -381,7 +381,7 @@ public class MainMenuEvents : MonoBehaviour
     private async Task OnCreateLobbyBtnClickedAsync()
     {
 
-        string code = await MultiplayerManager.Instance.CreateLobby((short)(playerSize[indexPC] - 1));
+        string code = await MultiplayerManager.Instance.CreateLobby(symbolCount[indexSC], gameModes[indexGM]);
         joinCodeLabel.text = code; 
 
         //UI

@@ -24,5 +24,12 @@ namespace Assets.Scripts.Shared
         }
 
         public void IncScore() { score++; }
+
+        public Label GetScoreLabel()
+        {
+            return scoreLabel;
+        }
+
+        public int GetScore() {  return score; }
     }
 }

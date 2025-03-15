@@ -29,8 +29,8 @@ public class RelayManager : MonoBehaviour
         {
             var allocation = await RelayService.Instance.CreateAllocationAsync(count);
             var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-
             var relayServerData = new RelayServerData(allocation, "wss");
+
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
             NetworkManager.Singleton.StartHost();
 

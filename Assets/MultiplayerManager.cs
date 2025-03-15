@@ -3,6 +3,8 @@ using Unity.Netcode;
 using UnityEngine.SceneManagement;
 using UnityEngine;
 using Unity.Collections;
+using DG.Tweening.Plugins;
+using System.Collections.Generic;
 
 public class MultiplayerManager : NetworkBehaviour
 {
@@ -12,7 +14,18 @@ public class MultiplayerManager : NetworkBehaviour
 
     // Store player names and clientIds in separate lists
     public NetworkList<FixedString32Bytes> playerNames;
+
+    // connected players
     public NetworkList<ulong> playerIds;
+
+    // Stores count of symbols on card
+    public short symbolsOnCard;
+
+    // Stores the name of the Game Mode
+    string gameMode;
+
+    // Check if all clients have sent ready message
+    public List<ulong> clientsReady;
 
     private void Awake()
     {
@@ -64,12 +77,25 @@ public class MultiplayerManager : NetworkBehaviour
 
 
 
-
+    //
     // Creates Lobby via relay
-    public async Task<string> CreateLobby(short lobbySize)
+    //
+    public async Task<string> CreateLobby(short symbolsOnCard, string gameMode)
     {
-        return await RelayManager.Instance.CreateRelay(lobbySize);
+        // assign count of symbols on card
+        this.symbolsOnCard = symbolsOnCard;
+
+        // assign chosen Game Mode
+        this.gameMode = gameMode;
+
+        // inicialize empty list for client
+        clientsReady = new List<ulong>();
+
+        // return established connection
+        return await RelayManager.Instance.CreateRelay(3);
     }
+
+
 
     // Joins Lobby via relay
     public async Task<bool> JoinLobby(string joinCode)
@@ -117,6 +143,34 @@ public class MultiplayerManager : NetworkBehaviour
             playerNames[playerIds.IndexOf(clientId)] = playerName;
         }
         Debug.LogWarning(playerName);
+
+    }
+    [ServerRpc(RequireOwnership =false)]
+    public void ClientReadyServerRpc(ulong clientId)
+    {
+        clientsReady.Add(clientId);
+        foreach (ulong client in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            if (!clientsReady.Contains(clientId))
+            {
+
+                Debug.Log("Adding client");
+                clientsReady.Add(clientId);
+                return;
+            }
+        }
+
+        // if all players are connected, send Start gamemode TOWER
+        if (SceneManager.GetActiveScene().buildIndex == 2)
+        {
+
+            if (IsServer)
+            {
+                Debug.Log("XD1");
+                DeckManager.Instance.SpawnCardsServerRpc(symbolsOnCard, gameMode);
+            }
+            UIManager.Instance.StartCountDownClientRpc();
+        }
 
     }
 

@@ -1,3 +1,4 @@
+using DG.Tweening;
 using System.Collections;
 using Unity.Netcode;
 using Unity.VisualScripting;
@@ -5,7 +6,6 @@ using UnityEngine;
 
 public class Card : NetworkBehaviour
 {
-
     public CardData symbolsIndexes = new CardData();
 
 
@@ -32,6 +32,15 @@ public class Card : NetworkBehaviour
 
     [SerializeField]
     private SlotScript slotScript;
+
+    [SerializeField]
+    private Sprite cross;
+
+    [SerializeField]
+    private SpriteRenderer crossSR;
+
+
+    private int sortingOrder;
     private void Start()
     {
         backgroundRenderer.sprite = backSprite;
@@ -46,6 +55,7 @@ public class Card : NetworkBehaviour
     public void ChangeSymbols(CardData symbols, int sortingOrder)
     {
         this.symbolsIndexes = symbols;
+        this.sortingOrder = sortingOrder;
         GetComponent<SpriteRenderer>().sortingOrder = sortingOrder;
         UpdateRenders(sortingOrder);
         HideSymbols();
@@ -106,7 +116,7 @@ public class Card : NetworkBehaviour
     }
 
 
-    private void AddBoxColliders()
+    private void AddBoxColliders(int sortingOrder)
     {
         if (isLocal)
         {
@@ -120,6 +130,7 @@ public class Card : NetworkBehaviour
                     if (slot.GetComponent<BoxCollider2D>() == null)
                     {
                         BoxCollider2D newBoxCol = slot.AddComponent<BoxCollider2D>();
+                        newBoxCol.layerOverridePriority = sortingOrder;
 
                         SpriteRenderer spriteRenderer = slot.GetComponent<SpriteRenderer>();
                         if (spriteRenderer != null && spriteRenderer.sprite != null)
@@ -143,7 +154,6 @@ public class Card : NetworkBehaviour
 
     public void OnSymbolClicked(string symbol)
     {
-        Debug.Log("fewfwefwef");
         if (isLocal && isFront)
         {
             DeckManager deckManager = FindObjectOfType<DeckManager>();
@@ -187,7 +197,7 @@ public class Card : NetworkBehaviour
         backgroundRenderer.sprite = frontSprite;
         ShowSymbols();
         yield return StartCoroutine(Flip90Degrees(duration));
-        AddBoxColliders();
+        AddBoxColliders(sortingOrder);
     }
 
     private IEnumerator Flip90Degrees(float flipDuration)
@@ -220,18 +230,71 @@ public class Card : NetworkBehaviour
     public IEnumerator MoveCardCoroutine(Vector3 targetPosition, float moveDuration)
     {
         Vector3 startPosition = transform.position;
+        Vector3 startScale = transform.localScale;
+        Vector3 targetScale = startScale * 1.15f;
+        float scaleDuration = 0.2f; // Duration for the scale animation
         float elapsedTime = 0;
 
-        while (elapsedTime < 1f)
+        // Smoothly scale up
+        while (elapsedTime < scaleDuration)
         {
-            elapsedTime += Time.deltaTime / moveDuration;
-            transform.position = Vector3.Lerp(startPosition, targetPosition, Mathf.SmoothStep(0, 1, elapsedTime));
+            elapsedTime += Time.deltaTime;
+            transform.localScale = Vector3.Lerp(startScale, targetScale, elapsedTime / scaleDuration);
             yield return null;
         }
 
+        transform.localScale = targetScale; // Ensure it reaches the exact size
+        elapsedTime = 0; // Reset for movement
+
+        // Move the card smoothly
+        while (elapsedTime < 1f)
+        {
+            elapsedTime += Time.deltaTime / moveDuration;
+            transform.position = Vector3.Lerp(startPosition, targetPosition, Mathf.SmoothStep(0, 1, elapsedTime));     
+           yield return null;
+        }
+
         transform.position = targetPosition;
+
         DeckManager.Instance.CardMovedServerRpc();
+        
     }
+
+
+    public void SpawnCross()
+    {
+
+        crossSR.enabled =false;
+        crossSR.sortingOrder = sortingOrder + 2;
+        isLocal = false;
+
+        crossSR.transform.DOScale(new Vector3(0.3f, 0.3f, 1), 1);
+        crossSR.sprite = cross;
+
+        Color color = crossSR.color;
+        color.a = 0;
+        crossSR.color = color;
+
+        crossSR.enabled = true;
+        crossSR.DOFade(1, 1f);
+
+        DespawnCross(2f);
+        
+    }
+
+    private void DespawnCross(float delay)
+    {
+        StartCoroutine(DespawnCrossCoroutine(delay));
+    }
+
+    private IEnumerator DespawnCrossCoroutine(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        crossSR.DOFade(0, 0.5f);
+        isLocal = true;
+        crossSR.transform.DOScale(new Vector3(1f, 1f, 0), 1);
+    }
+
 
 
 

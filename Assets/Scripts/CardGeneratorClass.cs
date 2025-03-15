@@ -4,11 +4,11 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Linq;
 using Random = System.Random;
+using Unity.Netcode;
+using Assets.Scripts;
 class CardGeneratorClass
 {
     // Zdroj : #The Dobble Algorithm - www.101computing.net/the-dobble-algorithm/
-
-
     public static List<List<int>> GenerateDobbleCards(int numberOfSymbolsOnCard, bool shuffleSymbolsOnCard = false)
     {
         int n = numberOfSymbolsOnCard - 1;
