@@ -6,6 +6,7 @@ using System.Linq;
 using Random = System.Random;
 using Unity.Netcode;
 using Assets.Scripts;
+using System.Threading.Tasks;
 class CardGeneratorClass
 {
     // Zdroj : #The Dobble Algorithm - www.101computing.net/the-dobble-algorithm/
@@ -47,6 +48,5 @@ class CardGeneratorClass
 
         return cards;
     }
-
 }
 

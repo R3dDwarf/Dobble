@@ -25,6 +25,10 @@ namespace Assets.Scripts.Shared
 
         public void IncScore() { score++; }
 
+        public void DecScore() { score--; }
+
+        public void SetScore(int score) { this.score = score; }
+
         public Label GetScoreLabel()
         {
             return scoreLabel;

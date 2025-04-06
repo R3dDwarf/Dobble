@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class Card : NetworkBehaviour
 {
+    public int cardDataIndex;
     public CardData symbolsIndexes = new CardData();
 
 
@@ -47,13 +48,14 @@ public class Card : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void ChangeSymbolsClientRpc(CardData symbols)
+    public void ChangeSymbolsClientRpc(CardData symbols, int cardDataIndex)
     {
-        ChangeSymbols(symbols, 1);
+        ChangeSymbols(symbols, cardDataIndex, 1);
     }
 
-    public void ChangeSymbols(CardData symbols, int sortingOrder)
+    public void ChangeSymbols(CardData symbols, int cardDataIndex, int sortingOrder)
     {
+        this.cardDataIndex = cardDataIndex;
         this.symbolsIndexes = symbols;
         this.sortingOrder = sortingOrder;
         GetComponent<SpriteRenderer>().sortingOrder = sortingOrder;
@@ -101,19 +103,15 @@ public class Card : NetworkBehaviour
         foreach (SpriteRenderer sp in spriteRenderes) { sp.enabled = false; }
         isFront = false;
     }
-    public void ShowSymbols()
+    public IEnumerator ShowSymbols()
     {
         foreach (SpriteRenderer sp in spriteRenderes) { sp.enabled = true; }
         isFront = true;
+        yield return null;
         
     }
 
 
-    [ClientRpc]
-    public void FlipCardClientRpc(float duration)
-    {
-        FlipCard(duration);
-    }
 
 
     private void AddBoxColliders(int sortingOrder)
@@ -159,7 +157,8 @@ public class Card : NetworkBehaviour
             DeckManager deckManager = FindObjectOfType<DeckManager>();
             if (deckManager)
             {
-                deckManager.OnSymbolClickedByPlayerServerRpc(symbol, NetworkObject.NetworkObjectId, NetworkManager.Singleton.LocalClientId);
+                Debug.Log("Card clicked");
+                deckManager.OnSymbolClickedByPlayerServerRpc(symbol, cardDataIndex, NetworkManager.Singleton.LocalClientId);
             }
         }
         else
@@ -186,6 +185,12 @@ public class Card : NetworkBehaviour
 
 
     // Animations
+    [ClientRpc]
+    public void FlipCardClientRpc(float duration)
+    {
+        FlipCard(duration);
+    }
+
 
     public void FlipCard(float duration)
     {
@@ -195,10 +200,35 @@ public class Card : NetworkBehaviour
     {
         yield return StartCoroutine(Flip90Degrees(duration));
         backgroundRenderer.sprite = frontSprite;
-        ShowSymbols();
+        yield return ShowSymbols();
         yield return StartCoroutine(Flip90Degrees(duration));
         AddBoxColliders(sortingOrder);
     }
+
+
+    [ClientRpc]
+    public void FlipBackClientRpc(float duration)
+    {
+        FlipCardBack(duration);
+    }
+
+    public void FlipCardBack(float duration)
+    {
+        StartCoroutine(FlipBackCardCouroutine(duration));
+    }
+
+    public IEnumerator FlipBackCardCouroutine(float duration)
+    {
+        DisableBoxColliders();
+        yield return StartCoroutine(Flip90Degrees(duration));
+        backgroundRenderer.sprite = backSprite;
+        
+        HideSymbols();
+
+        backgroundRenderer.sprite = backSprite;
+        yield return StartCoroutine(Flip90Degrees(duration));
+    }
+
 
     private IEnumerator Flip90Degrees(float flipDuration)
     {
@@ -217,21 +247,21 @@ public class Card : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void MoveCardClientRpc(Vector3 targetPosition, float moveDuration)
+    public void MoveCardClientRpc(Vector3 targetPosition, float moveDuration, float scale)
     {
-        MoveCard(targetPosition, moveDuration);
+        MoveCard(targetPosition, moveDuration, scale);
         Debug.LogWarning("CLientRPc");
     }
-    public void MoveCard(Vector3 targetPosition, float moveDuration)
+    public void MoveCard(Vector3 targetPosition, float moveDuration, float scale)
     {
-        StartCoroutine(MoveCardCoroutine(targetPosition, moveDuration));
+        StartCoroutine(MoveCardCoroutine(targetPosition, moveDuration, scale));
         Debug.LogWarning("CLientRPc fwef");
     }
-    public IEnumerator MoveCardCoroutine(Vector3 targetPosition, float moveDuration)
+    public IEnumerator MoveCardCoroutine(Vector3 targetPosition, float moveDuration, float scale)
     {
         Vector3 startPosition = transform.position;
         Vector3 startScale = transform.localScale;
-        Vector3 targetScale = startScale * 1.15f;
+        Vector3 targetScale = startScale * scale;
         float scaleDuration = 0.2f; // Duration for the scale animation
         float elapsedTime = 0;
 
@@ -256,7 +286,7 @@ public class Card : NetworkBehaviour
 
         transform.position = targetPosition;
 
-        DeckManager.Instance.CardMovedServerRpc();
+        DeckManager.Instance.CardMovedServerRpc(NetworkManager.Singleton.LocalClientId);
         
     }
 
@@ -294,6 +324,9 @@ public class Card : NetworkBehaviour
         isLocal = true;
         crossSR.transform.DOScale(new Vector3(1f, 1f, 0), 1);
     }
+
+
+
 
 
 

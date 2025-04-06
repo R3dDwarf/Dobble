@@ -69,6 +69,12 @@ MonoBehaviour:
   cardPrefab8: {fileID: 6749677078989254809, guid: 141105183571bcf4a8acf482f0fc45ee, type: 3}
   cardPrefab7: {fileID: 2321220224792868793, guid: 6713aa429a97b8f4e854bf27dd7539d1, type: 3}
   cardPrefab6: {fileID: 5447167986756682933, guid: 8bbbf882fdead1a48811470cc61041ba, type: 3}
+  towerLogicPrefab: {fileID: 3797467317728078646, guid: dcd329b81cf91b145b9e3eb863f67fc4, type: 3}
+  wellLogicPrefab: {fileID: 2377748617880976034, guid: b022512222724bf47bd0431e84fb6620, type: 3}
+  spotOnLogicPrefab: {fileID: 5102626728149915415, guid: 94b774d3bf715b84582c4369a0292f88, type: 3}
+  animationsPrefab: {fileID: 3384774212300854958, guid: 15fd984274ed7d941ae69b8cafd4b31d, type: 3}
+  gameMode: 
+  cardsTotal: 0
   sprites:
   - {fileID: 21300000, guid: 3a948e8a326c6e843b557401278bd167, type: 3}
   - {fileID: 21300000, guid: 2436611faf5733844a48eebb713d8244, type: 3}
@@ -127,4 +133,10 @@ MonoBehaviour:
   - {fileID: 21300000, guid: cdac8a71a9d397045ba50e6bf89a61df, type: 3}
   - {fileID: 21300000, guid: 5e2470a99ec8b7c42aa2f566284cc063, type: 3}
   - {fileID: 21300000, guid: 8f03a1b36806f9a4f8abf1347673f156, type: 3}
+  deckPosition: {x: 0, y: 2.9, z: 0}
+  cardOnDeck: {fileID: 0}
+  cardLocal: {fileID: 0}
+  cardUnder: {fileID: 0}
   cardCounter: 0
+  nextCardLayer: 10
+  gameStarted: 0

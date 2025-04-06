@@ -82,12 +82,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6749677078989254809, guid: 141105183571bcf4a8acf482f0fc45ee, type: 3}
       propertyPath: m_Name
-      value: Card-8 Variant
+      value: Card-6
       objectReference: {fileID: 0}
     - target: {fileID: 7321310797030709641, guid: 141105183571bcf4a8acf482f0fc45ee, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 2022073702
+      value: 1189768604
       objectReference: {fileID: 0}
+    - target: {fileID: 9192291987609852852, guid: 141105183571bcf4a8acf482f0fc45ee, type: 3}
+      propertyPath: backSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 89721428fc2000a4292acdb52b786317, type: 3}
     - target: {fileID: 9192291987609852852, guid: 141105183571bcf4a8acf482f0fc45ee, type: 3}
       propertyPath: spriteRenderes.Array.size
       value: 6

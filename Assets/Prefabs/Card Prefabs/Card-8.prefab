@@ -644,7 +644,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1831147016
+  GlobalObjectIdHash: 1039457248
   InScenePlacedSourceGlobalObjectIdHash: 1039457248
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -665,6 +665,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 841bc1eec5ad2c240be5e90d16fd8e2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cardDataIndex: 0
   symbolsIndexes:
     symbols:
       data:
@@ -680,10 +681,11 @@ MonoBehaviour:
         offset0048:
           byte0000: 0
           byte0008: 0
+    size: 0
   isLocal: 0
   cardPrefab: {fileID: 6749677078989254809}
   backgroundRenderer: {fileID: 6761397507151199059}
-  backSprite: {fileID: 21300000, guid: 5c84ba2a815d973478dd1f91bbcea105, type: 3}
+  backSprite: {fileID: 21300000, guid: 89721428fc2000a4292acdb52b786317, type: 3}
   frontSprite: {fileID: 21300000, guid: 484af2f344b13ec43a4b51dabc67e76f, type: 3}
   spriteRenderes:
   - {fileID: 5056482003754632505}
