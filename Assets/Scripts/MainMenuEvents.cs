@@ -1,11 +1,14 @@
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Unity.Collections;
 using Unity.Netcode;
-
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Unity.Collections.AllocatorManager;
@@ -79,6 +82,8 @@ public class MainMenuEvents : MonoBehaviour
 
 
     // Lobby Container
+    private Button LobbyBackToSelectBtn;
+
     private VisualElement lobbyContainer;
     private ListView playerList;
     [SerializeField]
@@ -242,7 +247,9 @@ public class MainMenuEvents : MonoBehaviour
         if (rightArrowGMBoxBtn != null) rightArrowGMBoxBtn.RegisterCallback<ClickEvent>(evt => OnRightArrowGMClicked());
 
         // Create Menu Box Buttons - Create Lobby
-        
+        LobbyBackToSelectBtn = AssignButton("LobbyBackToSelectMenu");
+        if (LobbyBackToSelectBtn != null) LobbyBackToSelectBtn.RegisterCallback<ClickEvent>(evt => OnBackToSelectMenuBtnClicked());
+
         instantiateLobbyBtn = AssignButton("InstantiateLobbyBtn");
         if (instantiateLobbyBtn != null)
         {
@@ -282,10 +289,19 @@ public class MainMenuEvents : MonoBehaviour
         
     }
 
+
+    public void LoadSceneAfterDisctFromLobby()
+    {
+        mainMenuContainer.style.display = DisplayStyle.None;
+        selectContainer.style.display = DisplayStyle.Flex;
+        joinContainer.style.display = DisplayStyle.None;
+        lobbyContainer.style.display = DisplayStyle.None;
+        createContainer.style.display = DisplayStyle.None;
+        SPContainer.style.display = DisplayStyle.None;
+    }
     private void SetupAudio()
     {
-        AudioManager.instance.PlayMusic("Menu", true);
-
+ 
         sfxSlider = document.rootVisualElement.Q("SfxSlider") as Slider;
 
         sfxSlider.SetValueWithoutNotify(AudioManager.instance.sfxSource.volume * 100);
@@ -302,6 +318,12 @@ public class MainMenuEvents : MonoBehaviour
 
     private void SetupPlayerList()
     {
+        playerList.itemsSource = players;
+        playerList.style.flexDirection = FlexDirection.Column;
+        playerList.style.justifyContent = Justify.FlexStart;
+        playerList.fixedItemHeight = 80;
+        playerList.style.height = 340;
+
         playerList.makeItem = () =>
         {
             return listItemTemplate.CloneTree();
@@ -313,18 +335,34 @@ public class MainMenuEvents : MonoBehaviour
             if (label != null)
             {
                 label.text = players[index];
-
             }
-            element.style.marginBottom = 50;
+
+            Button kickButton = element.Q<Button>("KickPlayer");
+            if (kickButton != null)
+            {
+                if (NetworkManager.Singleton.IsServer && index != 0)
+                {
+                    kickButton.style.visibility = Visibility.Visible;
+                    kickButton.clicked += () => OnKickPlayerBtnClicked(index);
+                }
+                else
+                {
+                    kickButton.style.visibility = Visibility.Hidden;
+                }
+            }
+            else
+            {
+                Debug.LogError("KickPlayer button not found at index " + index);
+            }
+
+            element.style.marginBottom = 10;
         };
-        playerList.style.flexDirection = FlexDirection.Column;
-        playerList.style.justifyContent = Justify.FlexStart;
-        playerList.style.alignItems = Align.Stretch;
-        playerList.style.height = 50;
-        playerList.itemsSource = players;
+
         playerList.RefreshItems();
         playerList.Rebuild();
     }
+
+
 
 
     public void UpdatePlayerList(NetworkList<FixedString32Bytes> playersNO)
@@ -506,6 +544,12 @@ public class MainMenuEvents : MonoBehaviour
         }
     }
 
+    private void OnKickPlayerBtnClicked(int playerIndex)
+    {
+        Debug.Log("trying to kick");
+        MultiplayerManager.Instance.KickPlayer(playerIndex);
+    }
+
     // Single player Box
     private void OnLeftArrowSPSCClicked()             // left arrow for Symbol Counts
     {
@@ -555,6 +599,12 @@ public class MainMenuEvents : MonoBehaviour
 
 
     // Lobby Box
+    private void OnBackToSelectMenuBtnClicked()
+    {
+        NetworkManager.Singleton.Shutdown();
+        lobbyContainer.style.display = DisplayStyle.None;
+        selectContainer.style.display = DisplayStyle.Flex;
+    }
 
     private void OnStartGameClicked()
     {

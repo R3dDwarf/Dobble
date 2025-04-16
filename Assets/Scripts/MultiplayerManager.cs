@@ -57,6 +57,7 @@ public class MultiplayerManager : NetworkBehaviour
         else
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback += HandleDisconnect;
             Debug.Log("MultiplayerManager started on client");
         }
 
@@ -75,6 +76,22 @@ public class MultiplayerManager : NetworkBehaviour
         {
             Debug.Log("Local client connected! Sending RPC...");
             SetPlayerNameServerRpc(clientId, MainMenuEvents.Instance.GetPlayerName());
+        }
+    }
+    private void HandleDisconnect(ulong clientId)
+    {
+        if (clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            Debug.Log("Odpojení klienta. Vracím se do menu...");
+            NetworkManager.Singleton.Shutdown();
+
+            if (SceneManager.GetActiveScene().buildIndex == 0)
+            {
+                MainMenuEvents.Instance.LoadSceneAfterDisctFromLobby();
+            }
+            else if(SceneManager.GetActiveScene().buildIndex == 2){
+                SceneManager.LoadScene(0);
+            }
         }
     }
 
@@ -97,7 +114,23 @@ public class MultiplayerManager : NetworkBehaviour
         // return established connection
         return await RelayManager.Instance.CreateRelay(3);
     }
+    
+    
+    public void  KickPlayer(int index)
+    {
+        Debug.Log($"Kick Player {index}");
+        if (IsServer)
+        {
+            NetworkManager.Singleton.DisconnectClient(playerIds[index]);
+            Debug.Log($"Kick Player {index}");
+            playerIds.RemoveAt(index);
+            playerNames.RemoveAt(index);
 
+        }
+
+    }
+
+   
 
 
     // Joins Lobby via relay
@@ -190,16 +223,6 @@ public class MultiplayerManager : NetworkBehaviour
         UIManager.Instance.StartCountDownClientRpc();
     }
 
-
-    [ClientRpc]
-    private void SpawnDeckCLientRpc()
-    {
-        if (DeckManager.Instance == null)
-        {
-            Instantiate(deckManagerPrefab);
-        }
-
-    }
 
 
     private void UpdateUI()
