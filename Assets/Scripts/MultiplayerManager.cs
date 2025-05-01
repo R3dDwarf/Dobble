@@ -24,8 +24,11 @@ public class MultiplayerManager : NetworkBehaviour
     // Stores count of symbols on card
     public short symbolsOnCard;
 
-    // Stores the name of the Game Mode
-    string gameMode;
+    // Stores the index of the Game Mode
+    int gameModeIndex;
+
+    // indicates if game mode is multiplayer or not
+    bool isMulti;
 
     // Check if all clients have sent ready message
     public List<ulong> clientsReady;
@@ -100,13 +103,13 @@ public class MultiplayerManager : NetworkBehaviour
     //
     // Creates Lobby via relay
     //
-    public async Task<string> CreateLobby(short symbolsOnCard, string gameMode)
+    public async Task<string> CreateLobby(short symbolsOnCard, bool isMulti, int gameIndex)
     {
         // assign count of symbols on card
         this.symbolsOnCard = symbolsOnCard;
+        this.isMulti = isMulti;
+        this.gameModeIndex = gameIndex;
 
-        // assign chosen Game Mode
-        this.gameMode = gameMode;
 
         // inicialize empty list for client
         clientsReady = new List<ulong>();
@@ -219,7 +222,7 @@ public class MultiplayerManager : NetworkBehaviour
     {
         yield return new WaitUntil(() => DeckManager.Instance != null && DeckManager.Instance.IsSpawned);
 
-        DeckManager.Instance.GameStartedServerRpc(symbolsOnCard, gameMode);
+        DeckManager.Instance.GameStartedServerRpc(symbolsOnCard, gameModeIndex, isMulti);
         UIManager.Instance.StartCountDownClientRpc();
     }
 

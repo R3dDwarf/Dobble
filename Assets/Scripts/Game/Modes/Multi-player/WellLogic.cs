@@ -33,7 +33,7 @@ public class WellLogic: NetworkBehaviour
     //
 
     [ServerRpc]
-    public void WellSpawnCardsServerRpc(short symbolCount, string gameMode)
+    public void WellSpawnCardsServerRpc(short symbolCount)
     {
         Debug.Log("well");
         UIManager.Instance.SetStartScoreClientRpc(deck.cardsTotal / NetworkManager.Singleton.ConnectedClientsIds.Count);

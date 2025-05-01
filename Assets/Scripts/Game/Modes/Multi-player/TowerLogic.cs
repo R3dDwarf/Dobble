@@ -26,7 +26,7 @@ public class TowerLogic : NetworkBehaviour
     //
 
     [ServerRpc]
-    public void TowerSpawnCardsServerRpc(short symbolCount, string gameMode)
+    public void TowerSpawnCardsServerRpc(short symbolCount)
     {
 
         // Spawn new Card on deck

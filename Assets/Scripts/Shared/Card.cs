@@ -46,6 +46,11 @@ public class Card : NetworkBehaviour
     {
         backgroundRenderer.sprite = backSprite;
     }
+    public int GetId()
+    {
+        return symbolsIndexes.cardId;
+    }
+
 
     [ClientRpc]
     public void ChangeSymbolsClientRpc(CardData symbols, int cardDataIndex)
@@ -66,6 +71,7 @@ public class Card : NetworkBehaviour
 
     public void UpdateRenders(int sortingOrder)
     {
+
         int index = 0;
         foreach (var symbol in this.symbolsIndexes.symbols)
         {
@@ -158,7 +164,7 @@ public class Card : NetworkBehaviour
             if (deckManager)
             {
                 Debug.Log("Card clicked");
-                deckManager.OnSymbolClickedByPlayerServerRpc(symbol, cardDataIndex, NetworkManager.Singleton.LocalClientId);
+                deckManager.OnSymbolClickedByPlayerServerRpc(symbol, cardDataIndex, symbolsIndexes.cardId, NetworkManager.Singleton.LocalClientId);
             }
         }
         else
@@ -219,6 +225,19 @@ public class Card : NetworkBehaviour
 
     public IEnumerator FlipBackCardCouroutine(float duration)
     {
+        foreach (SpriteRenderer sp in spriteRenderes)
+        {
+            sp.sortingOrder = backgroundRenderer.sortingOrder +1;
+        }
+
+        foreach (Transform child in transform)
+        {
+            Vector3 pos = child.transform.position;
+
+            child.transform.position = new Vector3(pos.x, pos.y, this.transform.position.z);   
+
+        }
+
         DisableBoxColliders();
         yield return StartCoroutine(Flip90Degrees(duration));
         backgroundRenderer.sprite = backSprite;
@@ -324,8 +343,6 @@ public class Card : NetworkBehaviour
         isLocal = true;
         crossSR.transform.DOScale(new Vector3(1f, 1f, 0), 1);
     }
-
-
 
 
 

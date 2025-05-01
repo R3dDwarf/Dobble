@@ -23,11 +23,11 @@ public class SpotOn : MonoBehaviour
     }
 
     [ServerRpc]
-    public void SpotOnSpawnCardsServerRpc(short symbolCount, string gameMode)
+    public void SpotOnSpawnCardsServerRpc(short symbolCount)
     {
         ui.ShowStopwatchClientRpc();
         ui.StartStopwatchClientRpc(90);
-        TowerLogic.Instance.TowerSpawnCardsServerRpc(symbolCount, gameMode);
+        TowerLogic.Instance.TowerSpawnCardsServerRpc(symbolCount);
 
     }
 }

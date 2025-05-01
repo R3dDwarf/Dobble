@@ -99,7 +99,7 @@ public class MainMenuEvents : MonoBehaviour
     private short[] symbolCount = { 6, 7, 8 };   // selector for count of symbols on each card
     private short indexSC = 0;
 
-    private string[] gameModes = { "Tower", "Well" };
+    private string[] gameModes = { "Tower", "Well", "Catch 'em all"};
     private short indexGM = 0;
 
     private string[] SPGameModes = { "Spot on!" };
@@ -506,7 +506,7 @@ public class MainMenuEvents : MonoBehaviour
     {
         if (--indexGM < 0)
         {
-            indexGM = 1;
+            indexGM = 2;
         }
         TextGMBox.text =gameModes[indexGM].ToString();
 
@@ -514,7 +514,7 @@ public class MainMenuEvents : MonoBehaviour
 
     private void OnRightArrowGMClicked()            // Right arrow to Game Mode
     {
-        if (++indexGM > 1)
+        if (++indexGM > 2)
         {
             indexGM = 0;
         }
@@ -524,7 +524,7 @@ public class MainMenuEvents : MonoBehaviour
     private async Task OnCreateLobbyBtnClickedAsync()
     {
 
-        string code = await MultiplayerManager.Instance.CreateLobby(symbolCount[indexSC], gameModes[indexGM]);
+        string code = await MultiplayerManager.Instance.CreateLobby(symbolCount[indexSC], true,indexGM);
         joinCodeLabel.text = code; 
 
         //UI
@@ -590,7 +590,7 @@ public class MainMenuEvents : MonoBehaviour
 
     private async Task OnStartTrainingBtnClicked()
     {
-         await MultiplayerManager.Instance.CreateLobby(symbolCount[indexSC], SPGameModes[indexSPGM]);   
+         await MultiplayerManager.Instance.CreateLobby(symbolCount[indexSC], false, indexSPGM);   
 
         Debug.Log("Lobby succesfully created!");
 

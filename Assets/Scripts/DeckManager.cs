@@ -10,6 +10,8 @@ using Unity.VisualScripting;
 using UnityEditor;
 using System.Threading.Tasks;
 using UnityEngine.VFX;
+using UnityEditor.Experimental.GraphView;
+using Unity.Netcode.Components;
 
 public class DeckManager : NetworkBehaviour
 {
@@ -41,6 +43,9 @@ public class DeckManager : NetworkBehaviour
     [SerializeField]
     private GameObject wellLogicPrefab;
 
+    [SerializeField]
+    private GameObject gottaLogicPrefab;
+
     //
     // Single-player
     //
@@ -55,12 +60,15 @@ public class DeckManager : NetworkBehaviour
     private GameObject animationsPrefab;
 
     // Card prefab based on chosen symbol count
-    private GameObject cardPrefab;
+    public GameObject cardPrefab;
 
     //-------------------------------------------------- END OF PREFABS
 
     // Current game mode
-    public string gameMode;
+    public int gameMode;
+
+    // if the gamemode is multiplayer or not
+    public bool isMulti;
 
 
     // Symbols on card
@@ -129,20 +137,22 @@ public class DeckManager : NetworkBehaviour
     // Fuction called after switching scenes
     //
     [ServerRpc]
-    public void GameStartedServerRpc(short symbolCount, string gameMode)
+    public void GameStartedServerRpc(short symbolCount, int gameModeIndex, bool isMulti)
     {
-        GameStarted(symbolCount, gameMode);
+        GameStarted(symbolCount, gameModeIndex, isMulti);
     }
     
-    private async void GameStarted(short symbolCount, string gameMode)
+    private async void GameStarted(short symbolCount, int gameModeIndex, bool isMulti)
     {
 
         GameObject ani = Instantiate(animationsPrefab);
         ani.GetComponent<NetworkObject>().Spawn();
 
+        this.isMulti = isMulti;
+        this.gameMode = gameModeIndex;
 
         // config the game
-        GameConfigClientRpc(symbolCount, gameMode);
+        GameConfigClientRpc(symbolCount, gameMode, isMulti  );
 
         // generate card combinations
         await GenerateDeck();
@@ -152,35 +162,50 @@ public class DeckManager : NetworkBehaviour
         // Forbid click events
         disabledClick = true;
 
-
-        switch (gameMode)
-        {
-            // multiplayer
-            case "Tower":
-                {
-                    GameObject tower = Instantiate(towerLogicPrefab);
-                    tower.GetComponent<NetworkObject>().Spawn();
-
-                    if (cards.Count > 0)
+        if (isMulti) {
+            switch (gameModeIndex)
+            {
+                // multiplayer
+                case 0:
                     {
-                        TowerLogic.Instance.TowerSpawnCardsServerRpc(symbolCount, gameMode);
-                    }
-                    break;
-                }
-            case "Well":
-                {
-                    GameObject well = Instantiate(wellLogicPrefab);
-                    well.GetComponent<NetworkObject>().Spawn();
+                        GameObject tower = Instantiate(towerLogicPrefab);
+                        tower.GetComponent<NetworkObject>().Spawn();
 
-                    if (cards.Count > 0)
-                    {
-                        WellLogic.Instance.WellSpawnCardsServerRpc(symbolCount, gameMode);
-                        Debug.Log("testing");
+                        if (cards.Count > 0)
+                        {
+                            TowerLogic.Instance.TowerSpawnCardsServerRpc(symbolCount);
+                        }
+                        break;
                     }
-                    break;
-                }
-            // single player
-            case "Spot on!":
+                case 1:
+                    {
+                        GameObject well = Instantiate(wellLogicPrefab);
+                        well.GetComponent<NetworkObject>().Spawn();
+
+                        if (cards.Count > 0)
+                        {
+                            WellLogic.Instance.WellSpawnCardsServerRpc(symbolCount);
+                            Debug.Log("testing");
+                        }
+                        break;
+                    }
+                case 2:
+                    {
+                        GameObject gotta = Instantiate(gottaLogicPrefab);
+                        gotta.GetComponent<NetworkObject>().Spawn();
+                        if(cards.Count > 0)
+                        {
+                            GottaCatchAllLogic.Instance.GottaSpawnCardsServerRpc();
+                        }
+                        break;
+                    }
+            }
+        }
+        else {
+            switch (gameModeIndex)
+            {
+                // single player
+                case 0:
                 {
                     GameObject spotOn = Instantiate(spotOnLogicPrefab);
                     spotOn.GetComponent<NetworkObject>().Spawn();
@@ -190,10 +215,11 @@ public class DeckManager : NetworkBehaviour
 
                     if (cards.Count > 0)
                     {
-                        SpotOn.Instance.SpotOnSpawnCardsServerRpc(symbolCount, gameMode);
+                        SpotOn.Instance.SpotOnSpawnCardsServerRpc(symbolCount);
                     }
                     break;
                 }
+            }
         }
     }
 
@@ -208,11 +234,14 @@ public class DeckManager : NetworkBehaviour
         Shuffle.ShuffleFunc(cardsList);
 
 
+        // card id
+        int id = 0;
+
         // suffle symbols in card and store them in list above
         foreach (var card in cardsList)
         {
             card.ShuffleFunc();
-            CardData cardData = new CardData(symbolCount);
+            CardData cardData = new CardData(symbolCount, id++);
 
             // copy values for data structure of card
             for (int i = 0; i < card.Count; i++)
@@ -235,6 +264,8 @@ public class DeckManager : NetworkBehaviour
     {
         cardOnDeck = Instantiate(cardPrefab, deckPosition, Quaternion.identity);
         NetworkObject networkObject = cardOnDeck.GetComponent<NetworkObject>();
+  
+
         networkObject.Spawn(true);
         cardOnDeck.GetComponent<Card>().ChangeSymbolsClientRpc(cards[cardDataIndex], cardDataIndex);
 
@@ -243,80 +274,119 @@ public class DeckManager : NetworkBehaviour
 
 
     [ServerRpc(RequireOwnership = false)]
-    public void OnSymbolClickedByPlayerServerRpc(string spriteName, int cardDataIndex, ulong playerID)
+    public void OnSymbolClickedByPlayerServerRpc(string spriteName, int cardDataIndex, int cardId, ulong playerID)
     {
-        Debug.Log("On Sprite Clicked:" + spriteName);
         if (disabledClick == true) return;
+
+        Debug.Log("On Sprite Clicked:" + spriteName);
 
         if (cardOnDeck.GetComponent<Card>().IsSymbolOnCard(spriteName))
         {
+            if (isMulti)
+            {
+                switch (gameMode)
+                {
+                    case 0:
+                        {
+                            TowerLogic.Instance.TowerCorrectAnswerHandlerServerRpc(playerID, cardCounter + 1 == cardsTotal);
+                            break;
+                        }
+                    case 1:
+                        {
+                            WellLogic.Instance.WellCorrectAnswerHandlerServerRpc(playerID, cardDataIndex, cardCounter + 1 == cardsTotal);
+                            break;
+                        }
+                    case 2:
+                        {
 
+                            Debug.Log("test2e1e12e32r");
+                            GottaCatchAllLogic.Instance.GottaCorrectAnswerHandlerServerRpc(playerID,cardCounter + 1 == cardsTotal, cardId);
+                            break;
+                        }
+                }
+            }
+            else
+            {
+                switch (gameMode)
+                {
+                    case 0:
+                        {
+                            TowerLogic.Instance.TowerCorrectAnswerHandlerServerRpc(playerID, cardCounter + 1 == cardsTotal);
+                            break;
+                        }
+
+                }
+            }
+        }
+        else
+        {
+            if (isMulti)
+            {
+                switch (gameMode)
+                {
+                    case 0:
+                        {
+                            TowerLogic.Instance.OnWrongSymbolClickedClientRpc(playerID);
+                            break;
+                        }
+                    case 1:
+                        {
+                            WellLogic.Instance.OnWrongSymbolClickedClientRpc(playerID);
+                            break;
+                        }
+
+                }
+            }
+            else
+            {
+                switch (gameMode)
+                {
+                    case 0:
+                        {
+                            TowerLogic.Instance.OnWrongSymbolClickedClientRpc(playerID);
+                            break;
+                        }
+                }
+
+            }
+        }
+
+        }
+    
+
+    [ServerRpc(RequireOwnership = false)]
+    public void CardMovedServerRpc(ulong clientId)
+    {
+        if (!isMulti)
+        {
             switch (gameMode)
             {
-                case "Tower" :
+                case 0:
                     {
-                        TowerLogic.Instance.TowerCorrectAnswerHandlerServerRpc(playerID, cardCounter + 1 == cardsTotal);
+                        TowerLogic.Instance.TowerCardMovedServerRpc(clientId);
                         break;
                     }
-                case "Well":
+                case 1:
                     {
-                        WellLogic.Instance.WellCorrectAnswerHandlerServerRpc(playerID, cardDataIndex, cardCounter + 1 == cardsTotal);
+                        WellLogic.Instance.WellCardMovedServerRpc();
                         break;
                     }
 
-                // Single player
-                case "Spot on!":
-                    {
-                        TowerLogic.Instance.TowerCorrectAnswerHandlerServerRpc(playerID, cardCounter + 1 == cardsTotal);
-                        break;
-                    }
             }
         }
         else
         {
             switch (gameMode)
             {
-                case "Tower":
+                case 0:
                     {
-                        TowerLogic.Instance.OnWrongSymbolClickedClientRpc(playerID);
-                        break;
-                    }
-                case "Well":
-                    {
-                        WellLogic.Instance.OnWrongSymbolClickedClientRpc(playerID);
-                        break;
-                    }
-                case "Spot on!":
-                    {
-                        TowerLogic.Instance.OnWrongSymbolClickedClientRpc(playerID);
+                        TowerLogic.Instance.TowerCardMovedServerRpc(clientId);
                         break;
                     }
             }
-        }
 
-    }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void CardMovedServerRpc(ulong clientId)
-    {
-        switch (gameMode)
-        {
-            case "Tower":
-                {
-                    TowerLogic.Instance.TowerCardMovedServerRpc(clientId);
-                    break;
-                }
-            case "Well":
-                {
-                    WellLogic.Instance.WellCardMovedServerRpc();
-                    break;
-                }
-            case "Spot on!":
-                {
-                    TowerLogic.Instance.TowerCardMovedServerRpc(clientId);
-                    break;
-                }
-        }
+            }
     }
 
     
@@ -360,13 +430,21 @@ public class DeckManager : NetworkBehaviour
 
 
     [ClientRpc]
-    private void GameConfigClientRpc(short symbolCount, string gameMode)
+    private void GameConfigClientRpc(short symbolCount, int gameMode, bool isMulti)
     {
         // deck position
-        deckPosition = new Vector3(0, 2.9f, 0);
+        if (isMulti && gameMode == 2)
+        {
+            deckPosition = new Vector3(0, 0, 0);
+        }
+        else
+        {
+            deckPosition = new Vector3(0, 2.9f, 0);
+        }
 
         // assign chosen game mode
         this.gameMode = gameMode;
+        this.isMulti = isMulti;
 
         int n = (symbolCount * symbolCount) - symbolCount + 1;
         cardsTotal = n;
@@ -400,7 +478,8 @@ public class DeckManager : NetworkBehaviour
     {
         if (NetworkManager.Singleton.LocalClientId != playerID) { return; }
 
-        if (string.Compare(gameMode, "Tower") ==0)
+        // check if the game mode is Tower
+        if (gameMode == 0)
         {
             Destroy(cardUnder);
         }
