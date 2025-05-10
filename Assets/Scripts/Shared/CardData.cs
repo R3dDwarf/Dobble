@@ -6,6 +6,8 @@ using System;
 public struct CardData : INetworkSerializable, IEquatable<CardData>
 {
     public FixedList64Bytes<int> symbols;
+    public FixedList64Bytes<float> scales;
+    public FixedList64Bytes<int> rotations;
     public int size;
 
     // Nové pole
@@ -17,6 +19,8 @@ public struct CardData : INetworkSerializable, IEquatable<CardData>
     {
         this.size = size;
         this.symbols = new FixedList64Bytes<int>();
+        this.rotations = new FixedList64Bytes<int>();
+        this.scales = new FixedList64Bytes<float>();
 
         // Inicializace nových polí
         this.cardId = cardId;
@@ -26,13 +30,13 @@ public struct CardData : INetworkSerializable, IEquatable<CardData>
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        int count = symbols.Length;
-        serializer.SerializeValue(ref count);
-
+        // Serializace symbols
+        int symbolsCount = symbols.Length;
+        serializer.SerializeValue(ref symbolsCount);
         if (serializer.IsReader)
         {
             symbols.Clear();
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < symbolsCount; i++)
             {
                 int value = 0;
                 serializer.SerializeValue(ref value);
@@ -41,19 +45,64 @@ public struct CardData : INetworkSerializable, IEquatable<CardData>
         }
         else
         {
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < symbolsCount; i++)
             {
                 int value = symbols[i];
                 serializer.SerializeValue(ref value);
             }
         }
 
-        // Serializace nových polí
+        // Serializace scales
+        int scalesCount = scales.Length;
+        serializer.SerializeValue(ref scalesCount);
+        if (serializer.IsReader)
+        {
+            scales.Clear();
+            for (int i = 0; i < scalesCount; i++)
+            {
+                float value = 0;
+                serializer.SerializeValue(ref value);
+                scales.Add(value);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < scalesCount; i++)
+            {
+                float value = scales[i];
+                serializer.SerializeValue(ref value);
+            }
+        }
+
+        // Serializace rotations
+        int rotationsCount = rotations.Length;
+        serializer.SerializeValue(ref rotationsCount);
+        if (serializer.IsReader)
+        {
+            rotations.Clear();
+            for (int i = 0; i < rotationsCount; i++)
+            {
+                int value = 0;
+                serializer.SerializeValue(ref value);
+                rotations.Add(value);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < rotationsCount; i++)
+            {
+                int value = rotations[i];
+                serializer.SerializeValue(ref value);
+            }
+        }
+
+        // Serializace ostatních polí
         serializer.SerializeValue(ref size);
         serializer.SerializeValue(ref cardId);
         serializer.SerializeValue(ref ownerId);
         serializer.SerializeValue(ref isClaimed);
     }
+
 
     public bool Equals(CardData other)
     {

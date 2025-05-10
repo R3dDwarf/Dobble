@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 namespace Assets.Scripts.Shared
 {
-    class PLayerScore
+    public class PLayerScore
     {
         ulong playerID;
         int score;
@@ -22,6 +22,8 @@ namespace Assets.Scripts.Shared
         {
             return playerID == playerID1;
         }
+
+        public ulong GetId() { return playerID; }
 
         public void IncScore() { score++; }
 

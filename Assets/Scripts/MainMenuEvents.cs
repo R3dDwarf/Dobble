@@ -32,7 +32,7 @@ public class MainMenuEvents : MonoBehaviour
 
     // Buttons of Main Menu
     [SerializeField]
-    private TextField playerName;
+    public TextField playerName;
     private Button playBtn;
 
     // Select Mode Menu Container
@@ -85,7 +85,7 @@ public class MainMenuEvents : MonoBehaviour
     private Button LobbyBackToSelectBtn;
 
     private VisualElement lobbyContainer;
-    private ListView playerList;
+    public ListView playerList;
     [SerializeField]
     private VisualTreeAsset listItemTemplate;
 
@@ -106,13 +106,14 @@ public class MainMenuEvents : MonoBehaviour
     private short indexSPGM = 0;
 
 
-    private List<string> players = new List<string>();
+    public List<string> players = new List<string>();
 
 
     private void Awake()
     {
         Instance = this;
         document = GetComponent<UIDocument>();
+
         // assign all containers
         mainMenuContainer = document.rootVisualElement.Q("MainMenuBox");
         selectContainer = document.rootVisualElement.Q("SelectModeBox");
@@ -158,6 +159,8 @@ public class MainMenuEvents : MonoBehaviour
 
         //Set up Audio
         SetupAudio();
+
+
     }
 
     // Update is called once per frame
@@ -464,6 +467,7 @@ public class MainMenuEvents : MonoBehaviour
                 return;
             }
 
+
             bool success = await MultiplayerManager.Instance.JoinLobby(joinCodeInput.text);
 
             if (success)
@@ -523,7 +527,6 @@ public class MainMenuEvents : MonoBehaviour
 
     private async Task OnCreateLobbyBtnClickedAsync()
     {
-
         string code = await MultiplayerManager.Instance.CreateLobby(symbolCount[indexSC], true,indexGM);
         joinCodeLabel.text = code; 
 

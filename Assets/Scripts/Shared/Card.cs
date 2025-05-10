@@ -1,8 +1,10 @@
 using DG.Tweening;
 using System.Collections;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class Card : NetworkBehaviour
 {
@@ -62,7 +64,7 @@ public class Card : NetworkBehaviour
     {
         this.cardDataIndex = cardDataIndex;
         this.symbolsIndexes = symbols;
-        this.sortingOrder = sortingOrder;
+        this.sortingOrder = sortingOrder + 10;
         GetComponent<SpriteRenderer>().sortingOrder = sortingOrder;
         UpdateRenders(sortingOrder);
         HideSymbols();
@@ -77,12 +79,26 @@ public class Card : NetworkBehaviour
         {
             Debug.Log("Sprites:" + symbol);
         }
+
+        foreach (Transform child in transform)
+        {
+            float baseScale = 0.15f; 
+            float variation = symbolsIndexes.scales[index];
+            child.localScale = child.localScale.normalized * baseScale * variation;
+        }
+
         foreach (SpriteRenderer sp in spriteRenderes)
         {
             sp.sprite = DeckManager.Instance.sprites[symbolsIndexes.symbols[index++]];
-            sp.transform.localScale *= 0.08f;
-            sp.sortingOrder = sortingOrder +1;
 
+
+
+            // rotate symbol randomly
+            int rotate = symbolsIndexes.rotations[index - 1];
+            sp.transform.rotation = Quaternion.Euler(0, 0, rotate);
+
+            //assign correct sorting order
+            sp.sortingOrder = sortingOrder +1;
 
             sp.transform.position = new Vector3(
             sp.transform.position.x,
@@ -194,7 +210,10 @@ public class Card : NetworkBehaviour
     [ClientRpc]
     public void FlipCardClientRpc(float duration)
     {
-        FlipCard(duration);
+
+        GetComponent<NetworkTransform>().enabled = false;
+            FlipCard(duration);
+
     }
 
 
@@ -204,6 +223,8 @@ public class Card : NetworkBehaviour
     }
     public IEnumerator FlipCardCouroutine(float duration)
     {
+        Debug.Log("test");
+
         yield return StartCoroutine(Flip90Degrees(duration));
         backgroundRenderer.sprite = frontSprite;
         yield return ShowSymbols();
@@ -263,6 +284,7 @@ public class Card : NetworkBehaviour
         }
 
         transform.rotation = endRotation;
+        yield return null;
     }
 
     [ClientRpc]

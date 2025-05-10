@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3385155368
+  GlobalObjectIdHash: 1986650903
   InScenePlacedSourceGlobalObjectIdHash: 1986650903
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -138,6 +138,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 8f03a1b36806f9a4f8abf1347673f156, type: 3}
   deckPosition: {x: 0, y: 2.9, z: 0}
   cardOnDeck: {fileID: 0}
+  disabledClick: 1
   cardLocal: {fileID: 0}
   cardUnder: {fileID: 0}
   cardCounter: 0

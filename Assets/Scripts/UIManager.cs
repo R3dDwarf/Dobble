@@ -2,6 +2,7 @@ using Assets.Scripts.Shared;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -13,13 +14,15 @@ public class UIManager : NetworkBehaviour
 
     private UIDocument UIDocument;
     public VisualElement deckContainer;
-    private PLayerScore[] scoreBoard = new PLayerScore[4];
+    public PLayerScore[] scoreBoard = new PLayerScore[4];
 
 
     // UI Builder Buttons
     private Button menuBtn;
     private Button exitMenuBtn;
     private Button exitGameBtn;
+
+    private Button leaveGameBtn;
 
     public override void OnNetworkSpawn()
     {
@@ -89,11 +92,7 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    private void LeaveGameScene()
-    {
-        MultiplayerManager.Instance.ChangeScene("Lobby");
 
-    }
 
 
     [ClientRpc]
@@ -149,6 +148,12 @@ public class UIManager : NetworkBehaviour
             exitGameBtn.RegisterCallback<ClickEvent>(evt => MultiplayerManager.Instance.ExitGame()); 
         }
 
+        leaveGameBtn = UIDocument.rootVisualElement.Q("LeaveGameBtn") as Button;
+        if (leaveGameBtn != null)
+        {
+            leaveGameBtn.RegisterCallback<ClickEvent>(evt => MultiplayerManager.Instance.ExitGame());
+        }
+
 
         for (int i = 0; i < playerIDs.Count; i++)
         {
@@ -157,26 +162,6 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    [ServerRpc]
-    public void TowerUpdateScoreBoardServerRpc(ulong clientID)
-    {
-        TowerUpdateScoreBoardClientRpc(clientID);
-        RefreshScoreUIClientRpc("Cards taken:");
-    }
-
-
-    [ClientRpc]
-    public void TowerUpdateScoreBoardClientRpc(ulong clientID)
-    {
-        foreach (PLayerScore ps in scoreBoard)
-        {
-            if (ps == null) return;
-            if (ps.CheckID(clientID))
-            {
-                ps.IncScore();
-            }
-        }
-    }
 
 
     [ClientRpc]
@@ -193,25 +178,6 @@ public class UIManager : NetworkBehaviour
 
 
 
-    [ServerRpc]
-    public void WellUpdateScoreBoardServerRpc(ulong clientId)
-    {
-        WellUpdateScoreBoardClientRpc(clientId);
-        RefreshScoreUIClientRpc("Cards left:");
-    }
-
-    [ClientRpc]
-    public void WellUpdateScoreBoardClientRpc(ulong clientID)
-    {
-        foreach (PLayerScore ps in scoreBoard)
-        {
-            if (ps == null) return;
-            if (ps.CheckID(clientID))
-            {
-                ps.DecScore();
-            }
-        }
-    }
 
     [ClientRpc]
     public void RefreshScoreUIClientRpc(string label)
@@ -246,6 +212,149 @@ public class UIManager : NetworkBehaviour
         countdownText.text = "GO!";
         yield return new WaitForSeconds(1f);
         countdownBox.style.display = DisplayStyle.None;
+    }
+
+    [ServerRpc]
+    public void ShowScoreBoardServerRpc(string suffix, bool order)
+    {
+        if (order)
+        {
+            // Sort by descending score
+            var topScores = scoreBoard
+                .Where(ps => ps != null)
+                .OrderByDescending(ps => ps.GetScore())
+                .Take(4)
+                .ToList();
+
+            // Prepare name and score arrays
+            string[] names = new string[4];
+            int[] scores = new int[4];
+
+            for (int i = 0; i < topScores.Count; i++)
+            {
+                ulong playerId = topScores[i].GetId();
+                int indexOfId = MultiplayerManager.Instance.playerIds.IndexOf(playerId);
+                names[i] = MultiplayerManager.Instance.playerNames[indexOfId].ToString();
+                scores[i] = topScores[i].GetScore();
+            }
+
+            // Fill remaining entries with default values
+            for (int i = topScores.Count; i < 4; i++)
+            {
+                names[i] = string.Empty;
+                scores[i] = -1;
+            }
+
+            // Send to clients
+            ShowScoreBoardClientRpc(suffix, names[0], names[1], names[2], names[3],
+                                    scores[0], scores[1], scores[2], scores[3]);
+        }
+        else
+        {
+            // Sort by ascending score
+            var topScores = scoreBoard
+                .Where(ps => ps != null)
+                .OrderBy(ps => ps.GetScore()) // vzestupné øazení
+                .Take(4)
+                .ToList();
+
+
+            // Prepare name and score arrays
+            string[] names = new string[4];
+            int[] scores = new int[4];
+
+            for (int i = 0; i < topScores.Count; i++)
+            {
+                ulong playerId = topScores[i].GetId();
+                int indexOfId = MultiplayerManager.Instance.playerIds.IndexOf(playerId);
+                names[i] = MultiplayerManager.Instance.playerNames[indexOfId].ToString();
+                scores[i] = topScores[i].GetScore();
+            }
+
+            // Fill remaining entries with default values
+            for (int i = topScores.Count; i < 4; i++)
+            {
+                names[i] = string.Empty;
+                scores[i] = -1;
+            }
+
+            // Send to clients
+            ShowScoreBoardClientRpc(suffix, names[0], names[1], names[2], names[3],
+                                    scores[0], scores[1], scores[2], scores[3]);
+
+        }
+    }
+
+
+
+    [ClientRpc]
+    public void ShowScoreBoardClientRpc(string suffix, string name1, string name2, string name3, string name4, int score1, int score2, int score3, int score4)
+    {
+        VisualElement box = UIDocument.rootVisualElement.Q("WinnerBox");
+        if (box != null)
+        {
+            box.style.display = DisplayStyle.Flex;
+        }
+
+
+        VisualElement player1 = UIDocument.rootVisualElement.Q("Player1");
+        if (!string.IsNullOrEmpty(name1))
+        {
+            player1.style.display = DisplayStyle.Flex;
+
+            Label player1Label = UIDocument.rootVisualElement.Q("Player1Label") as Label;
+            player1Label.text = name1 + " : " + score1.ToString() + suffix;
+        }
+        else
+        {
+            player1.style.display = DisplayStyle.None;
+        }
+
+
+        VisualElement player2 = UIDocument.rootVisualElement.Q("Player2");
+        if (!string.IsNullOrEmpty(name2))
+        {
+            
+            player2.style.display = DisplayStyle.Flex;
+
+            Label player2Label = UIDocument.rootVisualElement.Q("Player2Label") as Label;
+            player2Label.text = name2 + " : " + score2.ToString() + suffix;
+        }
+        else
+        {
+            player2.style.display = DisplayStyle.None;
+        }
+
+
+        VisualElement player3 = UIDocument.rootVisualElement.Q("Player3");
+        if (!string.IsNullOrEmpty(name3))
+        {
+            
+            player3.style.display = DisplayStyle.Flex;
+
+            Label player3Label = UIDocument.rootVisualElement.Q("Player3Label") as Label;
+            player3Label.text = name3 + " : " + score3.ToString() + suffix;
+
+        }
+        else
+        {
+            player3.style.display = DisplayStyle.None;
+        }
+
+
+        VisualElement player4 = UIDocument.rootVisualElement.Q("Player4");
+        if (!string.IsNullOrEmpty(name4))
+        {
+            player4.style.display = DisplayStyle.Flex;
+
+            Label player4Label = UIDocument.rootVisualElement.Q("Player4Label") as Label;
+            player4Label.text = name4 + " : " + score4.ToString() + suffix;
+
+        }
+        else
+        {
+            player4.style.display = DisplayStyle.None;
+        }
     }
 
     [ClientRpc]
@@ -297,6 +406,10 @@ public class UIManager : NetworkBehaviour
             text.text = sec.ToString();
             yield return new WaitForSeconds(1f);
         }
-        
+
+        DeckManager.Instance.StopWatchAlertServerRpc(NetworkManager.Singleton.LocalClientId);
+
+
+
     }
 }

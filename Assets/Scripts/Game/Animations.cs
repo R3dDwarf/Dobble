@@ -24,12 +24,35 @@ public class Animations : NetworkBehaviour
 
     }
 
+    public void StartDelayScore(float delay, string suffix, bool order )
+    {
+        StartCoroutine(DelayScoreCoroutine(delay,suffix, order));
+    }
+
+    private IEnumerator DelayScoreCoroutine(float delay, string suffix, bool order)
+    {
+        yield return new WaitForSeconds(delay);
+        UIManager.Instance.ShowScoreBoardServerRpc(suffix, order);
+    }
+
+
+
+
 
     public void FLipCardWithDelay()
     {
         if (deck.cardOnDeck != null)
         {
             deck.cardOnDeck.GetComponent<Card>().FlipCardClientRpc(0.5f);
+            StartCoroutine(DelayAnimation(0.5f, deck.EnableClick));
+        }
+
+    }
+    public void InstantFLipCardWithDelay(ulong clientId)
+    {
+        if (deck.cardOnDeck != null)
+        {
+            deck.cardOnDeck.GetComponent<Card>().FlipCardClientRpc(0f);
             StartCoroutine(DelayAnimation(0.5f, deck.EnableClick));
         }
 
@@ -105,7 +128,7 @@ public class Animations : NetworkBehaviour
     public IEnumerator FlipCardBackWithDelay(GameObject card, float delay) 
     {
         yield return new WaitForSeconds(delay);
-        StartCoroutine(card.GetComponent<Card>().FlipBackCardCouroutine(0.5f));
+        card.GetComponent<Card>().FlipBackClientRpc(0.5f);
         
     }
 }

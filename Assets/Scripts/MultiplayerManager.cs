@@ -44,17 +44,20 @@ public class MultiplayerManager : NetworkBehaviour
             Destroy(gameObject);
             return;
         }
-
         DontDestroyOnLoad(gameObject);
         playerNames = new NetworkList<FixedString32Bytes>();
         playerIds = new NetworkList<ulong>();
     }
 
+
     public override void OnNetworkSpawn()
     {
+
         if (IsServer)
         {
+
             NetworkManager.Singleton.OnClientConnectedCallback += OnPlayerJoined;
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnPlayerLeave;
             Debug.Log("MultiplayerManager started on host");
         }
         else
@@ -73,6 +76,21 @@ public class MultiplayerManager : NetworkBehaviour
             UpdateUI();
         };
     }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+
+        if (IsServer)
+        {
+            playerIds.Clear();
+            playerNames.Clear();
+        }
+ 
+        MainMenuEvents.Instance.players.Clear();   
+
+    }
+
     private void OnClientConnected(ulong clientId)
     {
         if (clientId == NetworkManager.Singleton.LocalClientId)
@@ -114,6 +132,7 @@ public class MultiplayerManager : NetworkBehaviour
         // inicialize empty list for client
         clientsReady = new List<ulong>();
 
+
         // return established connection
         return await RelayManager.Instance.CreateRelay(3);
     }
@@ -126,8 +145,6 @@ public class MultiplayerManager : NetworkBehaviour
         {
             NetworkManager.Singleton.DisconnectClient(playerIds[index]);
             Debug.Log($"Kick Player {index}");
-            playerIds.RemoveAt(index);
-            playerNames.RemoveAt(index);
 
         }
 
@@ -155,6 +172,25 @@ public class MultiplayerManager : NetworkBehaviour
                 SetPlayerNameServerRpc(clientId, ownerName);
             }
         }
+    }
+
+    private void OnPlayerLeave(ulong clientId)
+    {
+        if (!IsServer) { return; }
+
+        if (clientId == NetworkManager.Singleton.LocalClientId) { return; }
+
+        if (MainMenuEvents.Instance)
+        {
+            int index = playerIds.IndexOf(clientId);
+            if (index >= 0)
+            {
+                playerIds.RemoveAt(index);
+                playerNames.RemoveAt(index);
+            }
+
+        }
+
     }
 
     // Start Game scene

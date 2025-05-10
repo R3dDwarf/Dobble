@@ -1,6 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
+using Assets.Scripts.Shared;
+
 using Unity.Netcode;
+
 using UnityEngine;
 
 public class SpotOn : MonoBehaviour
@@ -29,5 +30,24 @@ public class SpotOn : MonoBehaviour
         ui.StartStopwatchClientRpc(90);
         TowerLogic.Instance.TowerSpawnCardsServerRpc(symbolCount);
 
+    }
+
+    [ServerRpc]
+    public void ShowScoreServerRpc(ulong clientId)
+    {
+        ShowScoreClientRpc(clientId);
+    }
+
+    [ClientRpc]
+    public void ShowScoreClientRpc(ulong clientId)
+    {
+        foreach (PLayerScore ps in UIManager.Instance.scoreBoard)
+        {
+            if (ps == null) return;
+            if (ps.CheckID(clientId))
+            {
+                UIManager.Instance.ShowWinnerClientRpc(ps.GetScore().ToString());
+            }
+        }
     }
 }

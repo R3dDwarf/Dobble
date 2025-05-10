@@ -1,3 +1,4 @@
+using Assets.Scripts.Shared;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -29,14 +30,14 @@ public class TowerLogic : NetworkBehaviour
     public void TowerSpawnCardsServerRpc(short symbolCount)
     {
 
+        UIManager.Instance.RefreshScoreUIClientRpc("Cards taken: ");
         // Spawn new Card on deck
-        deck.SpawnNewCardOnDeckServerRpc(deck.cardCounter++);
+        deck.SpawnNewCardOnDeckServerRpc(deck.cardCounter++, false);
 
         // Spawn local cards for each client
         TowerSpawnLocalStartingCardsServerRpc();
 
         // Delay all animations due to start of the game and the count down
-        StartCoroutine(ani.DelayAnimation(4f, FlipServerCardServerRpc));
         StartCoroutine(ani.DelayAnimation(4f, deck.EnableClick));
         StartCoroutine(ani.DelayAnimation(4f, ani.FLipCardWithDelay));
         FlipLocalStartingCardsClientRpc();
@@ -52,7 +53,8 @@ public class TowerLogic : NetworkBehaviour
         foreach (ulong client in NetworkManager.Singleton.ConnectedClientsIds)
         {
             // spawns local card
-            deck.SpawnLocalCopyOfCardClientRpc(deck.cardCounter++, deck.cards[deck.cardCounter], client, new Vector3(0, 2.9f, 0), 3);
+            deck.cardCounter = deck.cardCounter + 2;
+            deck.SpawnLocalCopyOfCardClientRpc(deck.cardCounter, deck.cards[deck.cardCounter], client, new Vector3(0, 2.9f, 0), 3);
 
             // move it to correct place
             deck.MoveCardToPlayersDeckClientRpc(client, localPos, 1.15f);
@@ -71,26 +73,33 @@ public class TowerLogic : NetworkBehaviour
             deck.cardOnDeck.GetComponent<NetworkObject>().Despawn();
 
             // add score for client
-            UIManager.Instance.TowerUpdateScoreBoardServerRpc(playerID);
+            TowerUpdateScoreBoardServerRpc(playerID);
 
             Card cardScript = deck.cardOnDeck.GetComponent<Card>();
             deck.SpawnLocalCopyOfCardClientRpc(cardScript.cardDataIndex,cardScript.symbolsIndexes, playerID, new Vector3(0, 2.9f, 0), deck.nextCardLayer);
 
-            deck.nextCardLayer = deck.nextCardLayer + 2;
-
-            deck.SpawnNewCardOnDeckServerRpc(deck.cardCounter++);
-
-            ani.FlipCardClientRpc(playerID, 0f);
+            deck.nextCardLayer = deck.nextCardLayer + 5;
+            deck.SpawnNewCardOnDeckServerRpc(++deck.cardCounter, false);
 
             deck.MoveCardToPlayersDeckClientRpc(playerID, localPos, 1.15f);
+
+            ani.FlipCardClientRpc(playerID, 0f);
         }
         else
         {
-            deck.cardLocal = deck.cardOnDeck;
-            deck.DisableClick();
-            deck.GetComponent<NetworkObject>().Despawn();
+            deck.cardOnDeck.GetComponent<NetworkObject>().Despawn();
+
+            // add score for client
+            TowerUpdateScoreBoardServerRpc(playerID);
+
+            Card cardScript = deck.cardOnDeck.GetComponent<Card>();
+            deck.SpawnLocalCopyOfCardClientRpc(cardScript.cardDataIndex, cardScript.symbolsIndexes, playerID, new Vector3(0, 2.9f, 0), deck.nextCardLayer);
+            ani.FlipCardClientRpc(playerID, 0f);
             deck.MoveCardToPlayersDeckClientRpc(playerID, localPos, 1.15f);
-            UIManager.Instance.ShowWinnerClientRpc("Test");
+
+
+            ani.StartDelayScore(2f, " points", true);
+            deck.DisableClick();
             return;
 
         }
@@ -133,6 +142,27 @@ public class TowerLogic : NetworkBehaviour
         {
             deck.cardOnDeck.GetComponent<Card>().FlipCardClientRpc(0.5f);
             StartCoroutine(ani.DelayAnimation(0.5f, deck.EnableClick));
+        }
+    }
+
+    [ServerRpc]
+    public void TowerUpdateScoreBoardServerRpc(ulong clientID)
+    {
+        TowerUpdateScoreBoardClientRpc(clientID);
+        UIManager.Instance.RefreshScoreUIClientRpc("Cards taken: ");
+    }
+
+
+    [ClientRpc]
+    public void TowerUpdateScoreBoardClientRpc(ulong clientID)
+    {
+        foreach (PLayerScore ps in UIManager.Instance.scoreBoard)
+        {
+            if (ps == null) return;
+            if (ps.CheckID(clientID))
+            {
+                ps.IncScore();
+            }
         }
     }
 

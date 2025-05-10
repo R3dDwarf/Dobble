@@ -4,13 +4,10 @@ using Unity.Netcode;
 
 using Assets.Scripts;
 
-using System.Collections;
-using System;
-using Unity.VisualScripting;
-using UnityEditor;
+
 using System.Threading.Tasks;
-using UnityEngine.VFX;
-using UnityEditor.Experimental.GraphView;
+
+ 
 using Unity.Netcode.Components;
 
 public class DeckManager : NetworkBehaviour
@@ -90,6 +87,7 @@ public class DeckManager : NetworkBehaviour
 
     // card on top of the deck
     public GameObject cardOnDeck;
+    [SerializeField]
     private bool disabledClick = true;
 
 
@@ -247,7 +245,14 @@ public class DeckManager : NetworkBehaviour
             for (int i = 0; i < card.Count; i++)
             {
 
-                cardData.symbols.Add(card[i] - 1);          // -1 because generator indexes symbols from 1 not 0
+                cardData.symbols.Add(card[i] - 1);          
+
+                int rotation = UnityEngine.Random.Range(0, 360);
+                cardData.rotations.Add(rotation);
+
+                float scale = UnityEngine.Random.Range(0.8f, 1.05f);
+                cardData.scales.Add(scale);
+
             }
             cards.Add(cardData);
         }
@@ -260,16 +265,37 @@ public class DeckManager : NetworkBehaviour
     // Spawns new network card on the deck
     //
     [ServerRpc]
-    public void SpawnNewCardOnDeckServerRpc(int cardDataIndex)
+    public void SpawnNewCardOnDeckServerRpc(int cardDataIndex, bool enableTransform)
     {
+
         cardOnDeck = Instantiate(cardPrefab, deckPosition, Quaternion.identity);
+        if (!enableTransform)
+        {
+            NetworkTransform nt = cardOnDeck.GetComponent<NetworkTransform>();
+            nt.enabled = false;
+
+            nt.SyncPositionY = false;
+            nt.SyncPositionX = false;
+            nt.SyncPositionZ = false;
+
+            nt.SyncRotAngleX = false;
+            nt.SyncRotAngleZ = false;
+            nt.SyncRotAngleY = false;
+
+
+        }
+
+
         NetworkObject networkObject = cardOnDeck.GetComponent<NetworkObject>();
-  
 
         networkObject.Spawn(true);
+
+
         cardOnDeck.GetComponent<Card>().ChangeSymbolsClientRpc(cards[cardDataIndex], cardDataIndex);
 
     }
+
+
 
 
 
@@ -293,7 +319,7 @@ public class DeckManager : NetworkBehaviour
                         }
                     case 1:
                         {
-                            WellLogic.Instance.WellCorrectAnswerHandlerServerRpc(playerID, cardDataIndex, cardCounter + 1 == cardsTotal);
+                            WellLogic.Instance.WellCorrectAnswerHandlerServerRpc(playerID, cardDataIndex, false);
                             break;
                         }
                     case 2:
@@ -357,7 +383,7 @@ public class DeckManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void CardMovedServerRpc(ulong clientId)
     {
-        if (!isMulti)
+        if (isMulti)
         {
             switch (gameMode)
             {
@@ -501,5 +527,14 @@ public class DeckManager : NetworkBehaviour
     public void EnableClick()
     {
         disabledClick = false;
+    }
+
+    [ServerRpc(RequireOwnership =false)]
+    public void StopWatchAlertServerRpc(ulong playerID)
+    {
+        if (gameMode == 0 && !isMulti)
+        {
+            SpotOn.Instance.ShowScoreServerRpc  (playerID);
+        }
     }
 }

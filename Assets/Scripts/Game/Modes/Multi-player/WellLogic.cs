@@ -1,7 +1,9 @@
+using Assets.Scripts.Shared;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Netcode;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 
 public class WellLogic: NetworkBehaviour
@@ -35,10 +37,16 @@ public class WellLogic: NetworkBehaviour
     [ServerRpc]
     public void WellSpawnCardsServerRpc(short symbolCount)
     {
-        Debug.Log("well");
-        UIManager.Instance.SetStartScoreClientRpc(deck.cardsTotal / NetworkManager.Singleton.ConnectedClientsIds.Count);
+        // update score
+        
+
         // Spawn new Card on deck
-        deck.SpawnNewCardOnDeckServerRpc(deck.cardCounter++);
+        deck.SpawnNewCardOnDeckServerRpc(deck.cardCounter++, false);
+
+        UIManager.Instance.SetStartScoreClientRpc((deck.cardsTotal / NetworkManager.Singleton.ConnectedClientsIds.Count));
+        UIManager.Instance.RefreshScoreUIClientRpc("Cards left: ");
+
+
 
         // Spawn local cards for each client
         WellSpawnLocalStartingCardsServerRpc();
@@ -147,8 +155,40 @@ public class WellLogic: NetworkBehaviour
         deck.cardLocal.GetComponent<Card>().isLocal = true;
     }
 
+    [ServerRpc]
+    public void WellUpdateScoreBoardServerRpc(ulong clientId)
+    {
+        WellUpdateScoreBoardClientRpc(clientId);
+        UIManager.Instance.RefreshScoreUIClientRpc("Cards left: ");
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestEndOfGameServerRpc(ulong clientId)
+    {
+        ani.StartDelayScore(2f, " left!", false);
+        deck.DisableClick();
+
+    }
+
+    [ClientRpc]
+    public void WellUpdateScoreBoardClientRpc(ulong clientID)
+    {
+        foreach (PLayerScore ps in UIManager.Instance.scoreBoard)
+        {
+            if (ps == null) return;
+            if (ps.CheckID(clientID))
+            {
+                ps.DecScore();
+                if (ps.GetScore() == 0  && IsHost)
+                {
+                    RequestEndOfGameServerRpc(NetworkManager.Singleton.LocalClientId);
+                }
+            }
+        }
+    }
 
 
+    ulong clientIdOfFinder;
 
     [ServerRpc]
     public void WellCorrectAnswerHandlerServerRpc(ulong playerID, int cardDataIndex, bool endOfGame)
@@ -156,49 +196,28 @@ public class WellLogic: NetworkBehaviour
         this.cardDataIndex = cardDataIndex;
         if (!endOfGame)
         {
+            clientIdOfFinder = playerID;
 
             // disable click events for all clients
             deck.DisableClick();
-            deck.cardOnDeck.GetComponent<Card>().FlipBackClientRpc(0.5f);
+            deck.cardOnDeck.GetComponent<Card>().FlipBackClientRpc(0.4f);
 
             Debug.Log("1localCard" + (deck.cardLocal == null));
 
-            deck.MoveCardToPlayersDeckClientRpc(playerID, deck.deckPosition, 0.85f);
+            deck.MoveCardToPlayersDeckClientRpc(playerID, deck.deckPosition, 0.86f);
 
 
             Debug.Log("localCard" + (deck.cardLocal == null));
-            DestroyCardOnStackClientRpc(playerID,1f);
-
-
-            StartCoroutine(ani.DelayAnimation(1f, ani.FLipCardWithDelay));
-
+            DestroyCardOnStackClientRpc(playerID,1.5f);
 
 
             // add score for client
-            UIManager.Instance.WellUpdateScoreBoardServerRpc(playerID);
+            WellUpdateScoreBoardServerRpc(playerID);
 
 
-            deck.nextCardLayer = deck.nextCardLayer + 2;
+            deck.nextCardLayer = deck.nextCardLayer - 2;
         }
-        else
-        {
 
-            // disable click events for all clients
-            deck.DisableClick();
-            deck.cardOnDeck.GetComponent<Card>().FlipBackClientRpc(0.5f);
-
-            Debug.Log("1localCard" + (deck.cardLocal == null));
-
-            deck.MoveCardToPlayersDeckClientRpc(playerID, deck.deckPosition, 0.85f);
-
-
-            Debug.Log("localCard" + (deck.cardLocal == null));
-
-            
-            UIManager.Instance.ShowWinnerClientRpc("Test");
-            return;
-
-        }
     }
 
 
@@ -219,18 +238,13 @@ public class WellLogic: NetworkBehaviour
         if (deck.cardOnDeck != null && deck.gameStarted)
         {
             StartCoroutine(ani.DelayAnimation(0.5f, deck.EnableClick));
-            deck.cardOnDeck.GetComponent<NetworkObject>().Despawn();
+            Destroy(deck.cardOnDeck);
+            deck.SpawnNewCardOnDeckServerRpc(cardDataIndex, false);
+            deck.cardOnDeck.GetComponent<Card>().FlipCardClientRpc(0.6f);
+               
+            
 
         }
-    }
-
-    [ClientRpc]
-    public void DestroyLocalCardClientRpc(ulong clientId)
-    {
-        if (clientId != NetworkManager.Singleton.LocalClientId) return;
-
-        Destroy(deck.cardLocal);
-        deck.SpawnNewCardOnDeckServerRpc(cardDataIndex);
     }
 
 

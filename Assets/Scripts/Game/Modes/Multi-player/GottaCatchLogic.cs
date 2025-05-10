@@ -1,3 +1,4 @@
+using Assets.Scripts.Shared;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -54,6 +55,7 @@ public class GottaCatchAllLogic : NetworkBehaviour
     {
         int playerCount = NetworkManager.Singleton.ConnectedClientsIds.Count;
 
+        UIManager.Instance.RefreshScoreUIClientRpc("Cards taken: ");
 
         // check if there is enough cards to start new round
         if (!((deck.cardsTotal - deck.cardCounter) >= playerCount))
@@ -61,7 +63,7 @@ public class GottaCatchAllLogic : NetworkBehaviour
             deck.cardLocal = deck.cardOnDeck;
             deck.DisableClick();
             deck.GetComponent<NetworkObject>().Despawn();
-            UIManager.Instance.ShowWinnerClientRpc("Test");
+            ani.StartDelayScore(2f, "taken!", true);
             return;
         }
 
@@ -80,7 +82,7 @@ public class GottaCatchAllLogic : NetworkBehaviour
         GottaShowLocalCardsClientRpc(playerCount,cardsOnDeck);
 
 
-        deck.SpawnNewCardOnDeckServerRpc(deck.cardCounter++);
+        deck.SpawnNewCardOnDeckServerRpc(deck.cardCounter++, true);
        
 
         deck.cardOnDeck.transform.localScale = new Vector3(0.75f, 0.75f, 1);
@@ -152,7 +154,7 @@ public class GottaCatchAllLogic : NetworkBehaviour
         if (!endOfGame)
         {
             deck.DisableClick();
-            UIManager.Instance.TowerUpdateScoreBoardServerRpc(playerID);
+            GottaUpdateScoreBoardServerRpc(playerID);
             FadeAwayCardClientRpc(cardId);
 
             cardsFound++;
@@ -165,6 +167,7 @@ public class GottaCatchAllLogic : NetworkBehaviour
                 StartCoroutine(DelayedSpawnCards());
                 cardsFound = 0;
             }
+            deck.EnableClick();
         }
         else
         {
@@ -172,7 +175,6 @@ public class GottaCatchAllLogic : NetworkBehaviour
             deck.DisableClick();
             deck.GetComponent<NetworkObject>().Despawn();
             deck.MoveCardToPlayersDeckClientRpc(playerID, localPos, 1.15f);
-            UIManager.Instance.ShowWinnerClientRpc("Test");
             return;
         }
     }
@@ -209,6 +211,27 @@ public class GottaCatchAllLogic : NetworkBehaviour
         }
 
 
+    }
+
+    [ServerRpc]
+    public void GottaUpdateScoreBoardServerRpc(ulong clientID)
+    {
+        GottaUpdateScoreBoardClientRpc(clientID);
+        UIManager.Instance.RefreshScoreUIClientRpc("Cards taken: ");
+    }
+
+
+    [ClientRpc]
+    public void GottaUpdateScoreBoardClientRpc(ulong clientID)
+    {
+        foreach (PLayerScore ps in UIManager.Instance.scoreBoard)
+        {
+            if (ps == null) return;
+            if (ps.CheckID(clientID))
+            {
+                ps.IncScore();
+            }
+        }
     }
 
 }
